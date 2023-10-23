@@ -6,9 +6,6 @@ spring:
     username: root
     password: 1234
 
-test:
-  1: 1234
-  2: 434234234
 
   jpa:
     hibernate:
