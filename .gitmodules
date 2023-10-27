@@ -1,0 +1,4 @@
+[submodule "usedAuciton-submodule"]
+	path = usedAuciton-submodule
+	url = https://github.com/byunkihyuk/usedAuciton-submodule.git
+	branch = main

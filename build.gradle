@@ -44,17 +44,16 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 
-
-
-	// lombok 에서 mapstruct binding 해주는 기능이 추가되었습니다.!
-
-
-
-
-
-
 }
 
 test {
 	useJUnitPlatform()
+}
+
+task copyYML(type: Copy){
+	copy {
+		from './usedAuciton-submodule'
+		include "*.yml"
+		into 'src/main/resources'
+	}
 }
