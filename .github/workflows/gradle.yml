@@ -47,6 +47,9 @@ jobs:
       run: cat ./src/main/resources/application.yml
 
 
+#    - name: Show application.yml
+#      run: cat ./src/main/resources/application.yml
+
     # (3) Gradle build
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
