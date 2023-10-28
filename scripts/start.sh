@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 
 PROJECT_ROOT="/home/ubuntu/action"
-JAR_FILE="$PROJECT_ROOT/usedAuction.jar"
+LOG_ROOT="/home/ubuntu/usedauction-log"
+JAR_FILE="$PROJECT_ROOT/build/libs/usedAuction-0.0.1-SNAPSHOT.jar"
 
 APP_LOG="$PROJECT_ROOT/application.log"
-ERROR_LOG="$PROJECT_ROOT/error.log"
-DEPLOY_LOG="$PROJECT_ROOT/deploy.log"
+ERROR_LOG="$LOG_ROOT/error.log"
+DEPLOY_LOG="$LOG_ROOT/deploy.log"
 
 TIME_NOW=$(date +%c)
 

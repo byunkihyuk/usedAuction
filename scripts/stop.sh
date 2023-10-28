@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 
-PROJECT_ROOT="/home/ubuntu/app"
-JAR_FILE="$PROJECT_ROOT/spring-webapp.jar"
+PROJECT_ROOT="/home/ubuntu/action"
+LOG_ROOT="/home/ubuntu/usedauction-log"
+JAR_FILE="$PROJECT_ROOT/build/libs/usedAuction-0.0.1-SNAPSHOT.jar"
 
-DEPLOY_LOG="$PROJECT_ROOT/deploy.log"
+DEPLOY_LOG="$LOG_ROOT/deploy.log"
 
 TIME_NOW=$(date +%c)
 
