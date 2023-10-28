@@ -52,6 +52,14 @@ dependencies {
 
 }
 
-tasks.named('test') {
+test {
 	useJUnitPlatform()
+}
+
+task copyYML(type: Copy){
+	copy {
+		from './usedAuciton-submodule'
+		include "*.yml"
+		into 'src/main/resources'
+	}
 }
