@@ -15,6 +15,7 @@ public class GeneralTransactionDto {
 
     private Integer generalTransactionId;
     private List<GeneralImageDto> images;
+    private String thumbnail;
     @NotBlank(message = "제목을 입력하세요.")
     private String title;
     private String content;

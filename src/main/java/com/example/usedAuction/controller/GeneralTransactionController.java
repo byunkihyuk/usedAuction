@@ -1,8 +1,12 @@
 package com.example.usedAuction.controller;
 
+import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.service.GeneralTransactionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,5 +32,12 @@ public class GeneralTransactionController {
     @GetMapping(value = "/general/{generalTransactionId}")
     public ResponseEntity<Object> getGeneralTransaction(@PathVariable Integer generalTransactionId){
         return generalTransactionService.getGeneralTransaction(generalTransactionId);
+    }
+
+    @GetMapping(value = "/general")
+    public ResponseEntity<Object> getAllGeneralTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
+                                                           @RequestParam(required = false,defaultValue = "10") Integer size,
+                                                           @RequestParam(required = false,defaultValue = "asc") String sort ){
+        return generalTransactionService.getAllGeneralTransaction(page,size,sort);
     }
 }
