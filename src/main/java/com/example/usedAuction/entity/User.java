@@ -15,7 +15,8 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private Integer user_id;
+    @Column(name = "user_id")
+    private Integer userId;
 
     @Column(nullable = false)
     private String username;
@@ -36,10 +37,11 @@ public class User {
     private String detailAddress;
 
     @CreatedDate
-    @Column(nullable = false)
-    private Timestamp created_at;
+    @Column(name ="created_at" ,nullable = false)
+    private Timestamp createdAt;
 
     @LastModifiedDate
-    private Timestamp updated_at;
+    @Column(name ="updated_at")
+    private Timestamp updatedAt;
 
 }
