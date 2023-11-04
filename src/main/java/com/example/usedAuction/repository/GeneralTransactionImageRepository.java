@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface GeneralTransactionImageRepository extends JpaRepository<GeneralTransactionImage, Integer> {
 
+  List<GeneralTransactionImage> findAllByGeneralTransactionId(GeneralTransaction generalTransactionId);
+
   }

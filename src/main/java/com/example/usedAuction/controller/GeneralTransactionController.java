@@ -24,4 +24,9 @@ public class GeneralTransactionController {
                                                          @RequestPart List<MultipartFile> multipartFile ){
         return generalTransactionService.postGeneralTransaction(generalTransactionFormDto,multipartFile);
     }
+
+    @GetMapping(value = "/general/{generalTransactionId}")
+    public ResponseEntity<Object> getGeneralTransaction(@PathVariable Integer generalTransactionId){
+        return generalTransactionService.getGeneralTransaction(generalTransactionId);
+    }
 }
