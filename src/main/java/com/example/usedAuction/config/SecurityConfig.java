@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .antMatchers(HttpMethod.POST, "/api/sign-up").permitAll()
                         .antMatchers(HttpMethod.POST, "/api/sign-in").permitAll()
-                        //.antMatchers(HttpMethod.GET, "/api/general/**").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/general/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

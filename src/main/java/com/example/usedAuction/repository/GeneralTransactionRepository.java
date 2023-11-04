@@ -9,5 +9,5 @@ import java.util.List;
 
 public interface GeneralTransactionRepository extends JpaRepository<GeneralTransaction,Integer> {
 
-
+    GeneralTransaction findByGeneralTransactionId(Integer generalTransactionId);
 }

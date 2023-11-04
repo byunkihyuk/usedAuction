@@ -105,4 +105,22 @@ public class GeneralTransactionService {
         }
         return ResponseEntity.status(status).body(result);
     }
+
+    public ResponseEntity<Object> getGeneralTransaction(Integer generalTransactionId) {
+        GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
+
+        List<GeneralTransactionImage> generalTransactionImages = generalTransactionImageRepository.findAllByGeneralTransactionId(generalTransaction);
+
+        GeneralTransactionDto resultGeneralTransactionDto = DataMapper.instance.generalTransactionToDto(generalTransaction);
+        resultGeneralTransactionDto.setImages(generalTransactionImages.stream()
+                .map(DataMapper.instance::generalImageEntityToDto)
+                .collect(Collectors.toList()));
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        Map<Integer,Object> data = new HashMap<>();
+        data.put(resultGeneralTransactionDto.getGeneralTransactionId(),resultGeneralTransactionDto);
+        result.setData(data);
+        result.setStatus("success");
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 }
