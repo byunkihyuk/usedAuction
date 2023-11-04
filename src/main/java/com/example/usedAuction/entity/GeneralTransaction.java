@@ -11,37 +11,40 @@ import java.sql.Timestamp;
 @Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class User {
+public class GeneralTransaction {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(name = "user_id")
-    private Integer userId;
+    @Column(name = "general_transaction_id")
+    private Integer generalTransactionId;
 
     @Column(nullable = false)
-    private String username;
+    private String title;
+
+    private String content;
 
     @Column(nullable = false)
-    private String password;
+    private Integer price;
 
-    @Column(nullable = false)
-    private String nickname;
+    @Column(name = "transaction_mode",nullable = false)
+    private String transactionMode;
 
-    @Column(nullable = false)
-    private String phone;
+    private String location;
 
-    @Column(nullable = true)
-    private String address;
+    @Column(name = "transaction_state",nullable = false)
+    private String transactionState;
 
-    @Column(nullable = true)
-    private String detailAddress;
+    private String payment;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User userId;
 
     @CreatedDate
-    @Column(name ="created_at" ,nullable = false)
+    @Column(name = "created_at",nullable = false)
     private Timestamp createdAt;
 
     @LastModifiedDate
-    @Column(name ="updated_at")
+    @Column(name = "updated_at")
     private Timestamp updatedAt;
-
 }

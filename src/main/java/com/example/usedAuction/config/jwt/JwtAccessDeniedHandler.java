@@ -20,6 +20,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
       //필요한 권한이 없이 접근하려 할때 403
       //response.sendError(HttpServletResponse.SC_FORBIDDEN);
       ObjectMapper objectMapper = new ObjectMapper();
+      response.setContentType("text/html;charset=utf8;");
       ResponseResultError responseResultError = new ResponseResultError("error", ErrorEnum.FORBIDDEN_ERROR.getMessage());
       response.getWriter().write(objectMapper.writeValueAsString(responseResultError));
       response.setStatus(HttpStatus.FORBIDDEN.value());

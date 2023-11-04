@@ -15,13 +15,13 @@ import java.sql.Timestamp;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserDto {
-    private Integer user_id;
+    private Integer userId;
     private String username;
     private String password;
     private String nickname;
     private String phone;
     private String address;
     private String detailAddress;
-    private Timestamp created_at;
-    private Timestamp updated_at;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 }

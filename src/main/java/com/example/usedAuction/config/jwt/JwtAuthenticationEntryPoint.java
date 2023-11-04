@@ -25,6 +25,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
                         AuthenticationException authException) throws IOException {
       // 유효한 자격증명을 제공하지 않고 접근하려 할때 401
       ObjectMapper objectMapper = new ObjectMapper();
+      response.setContentType("text/html;charset=utf8;");
 
       if(authException instanceof BadCredentialsException){
          Map<String,Object> map = new HashMap<>();
