@@ -16,6 +16,10 @@ import com.example.usedAuction.repository.UserRepository;
 import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -121,6 +125,20 @@ public class GeneralTransactionService {
         data.put(resultGeneralTransactionDto.getGeneralTransactionId(),resultGeneralTransactionDto);
         result.setData(data);
         result.setStatus("success");
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    public ResponseEntity<Object> getAllGeneralTransaction(Integer page, Integer size, String sort) {
+        Sort s = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
+                Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page,size, s);
+        List<GeneralTransactionDto> resultGeneralTransaction = generalTransactionRepository.findAll(pageable).stream()
+                .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        Map<String,Object> data = new HashMap<>();
+        data.put("data", resultGeneralTransaction);
+        result.setData(data);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
