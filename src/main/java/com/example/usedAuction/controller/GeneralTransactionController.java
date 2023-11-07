@@ -40,4 +40,9 @@ public class GeneralTransactionController {
                                                            @RequestParam(required = false,defaultValue = "asc") String sort ){
         return generalTransactionService.getAllGeneralTransaction(page,size,sort);
     }
+
+    @DeleteMapping(value = "/general/{generalTransactionId}")
+    public ResponseEntity<Object> deleteGeneralTransaction(@PathVariable Integer generalTransactionId){
+        return generalTransactionService.deleteGeneralTransaction(generalTransactionId);
+    }
 }

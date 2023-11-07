@@ -7,6 +7,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @Entity
@@ -14,7 +16,7 @@ import java.sql.Timestamp;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Integer userId;
 
@@ -43,5 +45,8 @@ public class User {
     @LastModifiedDate
     @Column(name ="updated_at")
     private Timestamp updatedAt;
+
+    @OneToMany(mappedBy = "userId", cascade = CascadeType.REMOVE)
+    private List<GeneralTransaction> generalTransactionList = new ArrayList<>();
 
 }

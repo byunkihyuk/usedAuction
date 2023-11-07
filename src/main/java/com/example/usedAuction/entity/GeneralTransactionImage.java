@@ -12,7 +12,7 @@ import java.sql.Timestamp;
 @EntityListeners(AuditingEntityListener.class)
 public class GeneralTransactionImage {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "general_image_id")
     private Integer generalImageId;
     @Column(name = "image_seq")

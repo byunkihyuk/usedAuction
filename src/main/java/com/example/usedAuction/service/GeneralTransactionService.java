@@ -1,10 +1,12 @@
 package com.example.usedAuction.service;
 
+import com.amazonaws.services.ec2.model.ResponseError;
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.General.GeneralImageDto;
 import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.result.ResponseResult;
+import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.entity.GeneralTransaction;
 import com.example.usedAuction.entity.GeneralTransactionImage;
 import com.example.usedAuction.entity.User;
@@ -59,8 +61,7 @@ public class GeneralTransactionService {
             GeneralTransaction generalTransaction = DataMapper.instance.generalTransactionFormToEntity(generalTransactionFormDto);
             generalTransaction.setUserId(loginUser);
             GeneralTransaction getGeneralTransaction=null;
-            
-            // 게시글 저장 
+            // 게시글 저장
             try{
                 getGeneralTransaction = generalTransactionRepository.save(generalTransaction);
             }catch (Exception e){
@@ -88,20 +89,19 @@ public class GeneralTransactionService {
 
                 }
 
-                    successGeneralImageDtoList =  generalTransactionImageRepository.saveAll(imageList);
-                    List<GeneralImageDto> resultImageList =   successGeneralImageDtoList.stream()
-                            .map(DataMapper.instance::generalImageEntityToDto)
-                            .collect(Collectors.toList());
+                successGeneralImageDtoList =  generalTransactionImageRepository.saveAll(imageList);
+                List<GeneralImageDto> resultImageList =   successGeneralImageDtoList.stream()
+                        .map(DataMapper.instance::generalImageEntityToDto)
+                        .collect(Collectors.toList());
 
-                    GeneralTransactionDto resultGeneralTransactionDtoDto = DataMapper.instance.generalTransactionToDto(getGeneralTransaction);
-                    resultGeneralTransactionDtoDto.setImages(resultImageList);
-                    
-                    Map<String,Object> map = new HashMap<>();
-                    Map<Object,Object> data = new HashMap<>();
-                    data.put(resultGeneralTransactionDtoDto.getGeneralTransactionId(), resultGeneralTransactionDtoDto);
-                    map.put("data",data);
-                    result.setStatus("success");
-                    result.setData(map);
+                GeneralTransactionDto resultGeneralTransactionDtoDto = DataMapper.instance.generalTransactionToDto(getGeneralTransaction);
+                resultGeneralTransactionDtoDto.setImages(resultImageList);
+                Map<String,Object> map = new HashMap<>();
+                Map<Object,Object> data = new HashMap<>();
+                data.put(resultGeneralTransactionDtoDto.getGeneralTransactionId(), resultGeneralTransactionDtoDto);
+                map.put("data",data);
+                result.setStatus("success");
+                result.setData(map);
 
             }catch (Exception e ){
                 throw  new ApiException(ErrorEnum.IMAGE_UPLOAD_FAIL);
@@ -141,4 +141,32 @@ public class GeneralTransactionService {
         result.setData(data);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
+
+    public ResponseEntity<Object> deleteGeneralTransaction(Integer generalTransactionId) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+
+        GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
+        //s3 이미지 삭제 하기 위해서 가져옴
+        List<GeneralTransactionImage> generalTransactionImageList = generalTransactionImageRepository.findAllByGeneralTransactionId(generalTransaction);
+
+        try{
+            generalTransactionRepository.delete(generalTransaction);
+
+            //generalTransactionImageRepository.deleteAll(generalTransactionImageList);
+
+            s3UploadService.deleteImages(generalTransactionImageList);
+            result.setStatus("success");
+            GeneralTransactionDto generalTransactionDto = DataMapper.instance.generalTransactionToDto(generalTransaction);
+            Map<String,Object> data = new HashMap<>();
+            data.put("message",generalTransactionDto.getGeneralTransactionId()+"번 글 삭제 성공");
+            result.setData(data);
+        }catch (Exception e){
+            ResponseResultError error = new ResponseResultError("error","글 삭제 실패");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        return ResponseEntity.status(status).body(result);
+    }
+
 }
