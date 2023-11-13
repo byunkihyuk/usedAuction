@@ -1,6 +1,6 @@
 package com.example.usedAuction.dto;
 
-import com.example.usedAuction.dto.General.GeneralImageDto;
+import com.example.usedAuction.dto.General.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
@@ -18,7 +18,7 @@ public interface DataMapper {
     User userToEntity(UserSignUpFormDto userSignUpFormDto);
     GeneralTransaction generalTransactionFormToEntity(GeneralTransactionFormDto generalTransactionFormDto);
     @Mapping(source = "generalTransactionId",target = "generalTransactionId.generalTransactionId")
-    GeneralTransactionImage generalImageDtoToEntity(GeneralImageDto generalImageDto);
+    GeneralTransactionImage generalImageDtoToEntity(GeneralTransactionImageDto generalTransactionImageDto);
 
     /***
      * entity to dto method
@@ -27,5 +27,5 @@ public interface DataMapper {
     GeneralTransactionDto generalTransactionToDto(GeneralTransaction generalTransaction);
 
     @Mapping(source = "generalTransactionId.generalTransactionId",target = "generalTransactionId")
-    GeneralImageDto generalImageEntityToDto(GeneralTransactionImage img);
+    GeneralTransactionImageDto generalImageEntityToDto(GeneralTransactionImage img);
 }

@@ -2,6 +2,8 @@ package com.example.usedAuction.controller;
 
 import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
+import com.example.usedAuction.errors.ApiException;
+import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.service.GeneralTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -22,7 +24,8 @@ import java.util.List;
 public class GeneralTransactionController {
     private final GeneralTransactionService generalTransactionService;
 
-    @PostMapping(value = "/general",consumes = {MediaType.APPLICATION_JSON_VALUE,
+    @PostMapping(value = "/general",
+            consumes = {MediaType.APPLICATION_JSON_VALUE,
             MediaType.MULTIPART_FORM_DATA_VALUE})
     public ResponseEntity<Object> postGeneralTransaction(@RequestPart @Valid GeneralTransactionFormDto generalTransactionFormDto,
                                                          @RequestPart List<MultipartFile> multipartFile ){
@@ -34,6 +37,7 @@ public class GeneralTransactionController {
         return generalTransactionService.getGeneralTransaction(generalTransactionId);
     }
 
+
     @GetMapping(value = "/general")
     public ResponseEntity<Object> getAllGeneralTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
                                                            @RequestParam(required = false,defaultValue = "10") Integer size,
@@ -41,8 +45,20 @@ public class GeneralTransactionController {
         return generalTransactionService.getAllGeneralTransaction(page,size,sort);
     }
 
+    @PutMapping(value = "/general/{generalTransactionId}",
+            consumes = {MediaType.APPLICATION_JSON_VALUE,
+                    MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Object> updateGeneralTransaction(
+            @PathVariable(value = "generalTransactionId") Integer generalTransactionId,
+            @RequestPart @Valid GeneralTransactionFormDto generalTransactionFormDto,
+            @RequestPart(required = false) List<MultipartFile> multipartFile ){
+        return generalTransactionService.updateGeneralTransaction(generalTransactionId,generalTransactionFormDto,multipartFile);
+
+    }
+
     @DeleteMapping(value = "/general/{generalTransactionId}")
-    public ResponseEntity<Object> deleteGeneralTransaction(@PathVariable Integer generalTransactionId){
+    public ResponseEntity<Object> deleteGeneralTransaction(@PathVariable Integer generalTransactionId) {
         return generalTransactionService.deleteGeneralTransaction(generalTransactionId);
     }
+
 }

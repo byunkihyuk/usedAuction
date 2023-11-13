@@ -18,9 +18,9 @@ public class GeneralTransactionImage {
     @Column(name = "image_seq")
     private Integer imageSeq;
     @Column(name = "origin_url")
-    private String originUrl;
+    private String originName;
     @Column(name = "image_url")
-    private String imageUrl;
+    private String imageName;
     @Column(name = "upload_url")
     private String uploadUrl;
     @CreatedDate

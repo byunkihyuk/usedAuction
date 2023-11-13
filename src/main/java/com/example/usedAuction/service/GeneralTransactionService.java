@@ -1,8 +1,7 @@
 package com.example.usedAuction.service;
 
-import com.amazonaws.services.ec2.model.ResponseError;
 import com.example.usedAuction.dto.DataMapper;
-import com.example.usedAuction.dto.General.GeneralImageDto;
+import com.example.usedAuction.dto.General.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.result.ResponseResult;
@@ -18,7 +17,6 @@ import com.example.usedAuction.repository.UserRepository;
 import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -26,10 +24,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -65,7 +66,7 @@ public class GeneralTransactionService {
             try{
                 getGeneralTransaction = generalTransactionRepository.save(generalTransaction);
             }catch (Exception e){
-                throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_POST_FAIL);
+                throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_POST_ERROR);
             }
             // 이미지 저장(s3 업로드) 후 결과 반환
             try{
@@ -73,26 +74,27 @@ public class GeneralTransactionService {
                 List<GeneralTransactionImage> successGeneralImageDtoList=null;
 
                 for(int i=1;i<=imageFiles.size();i++){
-                    GeneralImageDto generalImageDto = new GeneralImageDto();
+                    GeneralTransactionImageDto generalTransactionImageDto = new GeneralTransactionImageDto();
                     MultipartFile image = imageFiles.get(i-1);
-                    generalImageDto.setImageSeq(i);
-                    generalImageDto.setOriginUrl(image.getOriginalFilename());
+                    generalTransactionImageDto.setImageSeq(i);
+                    generalTransactionImageDto.setOriginName(image.getOriginalFilename());
 
-                    String origin_url = generalImageDto.getOriginUrl().substring(generalImageDto.getOriginUrl().lastIndexOf(".")+1);
-                    String uploadFilename = UUID.randomUUID() + "."+origin_url;
-                    generalImageDto.setImageUrl(uploadFilename);
-                    generalImageDto.setUploadUrl(s3UploadService.uploadImage(image,uploadFilename));
+                    String imageFilename = makeUploadFileName(generalTransactionImageDto.getOriginName());
+                    generalTransactionImageDto.setImageName(imageFilename);
+                    generalTransactionImageDto.setUploadUrl(s3UploadService.uploadImage(image,imageFilename));
 
-                    GeneralTransactionImage generalTransactionImage = DataMapper.instance.generalImageDtoToEntity(generalImageDto);
+                    GeneralTransactionImage generalTransactionImage = DataMapper.instance.generalImageDtoToEntity(generalTransactionImageDto);
                     generalTransactionImage.setGeneralTransactionId(getGeneralTransaction);
                     imageList.add(generalTransactionImage);
 
                 }
 
+
                 successGeneralImageDtoList =  generalTransactionImageRepository.saveAll(imageList);
-                List<GeneralImageDto> resultImageList =   successGeneralImageDtoList.stream()
+                List<GeneralTransactionImageDto> resultImageList =   successGeneralImageDtoList.stream()
                         .map(DataMapper.instance::generalImageEntityToDto)
                         .collect(Collectors.toList());
+
 
                 GeneralTransactionDto resultGeneralTransactionDtoDto = DataMapper.instance.generalTransactionToDto(getGeneralTransaction);
                 resultGeneralTransactionDtoDto.setImages(resultImageList);
@@ -104,12 +106,18 @@ public class GeneralTransactionService {
                 result.setData(map);
 
             }catch (Exception e ){
-                throw  new ApiException(ErrorEnum.IMAGE_UPLOAD_FAIL);
+                throw  new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
             }
         }
         return ResponseEntity.status(status).body(result);
     }
 
+    private String makeUploadFileName(String imageFilename) {
+        String extension = imageFilename.substring(imageFilename.lastIndexOf(".")+1);
+        return  UUID.randomUUID() + "."+extension;
+    }
+
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getGeneralTransaction(Integer generalTransactionId) {
         GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
 
@@ -127,6 +135,7 @@ public class GeneralTransactionService {
         result.setStatus("success");
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
+
 
     public ResponseEntity<Object> getAllGeneralTransaction(Integer page, Integer size, String sort) {
         Sort s = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
@@ -169,4 +178,174 @@ public class GeneralTransactionService {
         return ResponseEntity.status(status).body(result);
     }
 
+    @Transactional
+    public ResponseEntity<Object> updateGeneralTransaction(Integer generalTransactionId, GeneralTransactionFormDto generalTransactionFormDto, List<MultipartFile> multipartFile) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus resultHttp = HttpStatus.OK;
+        GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
+
+        // 글 정보 수정
+        updateTransactionEntity(generalTransaction,generalTransactionFormDto);
+
+        List<GeneralTransactionImage> generalTransactionImages = generalTransactionImageRepository.findAllByGeneralTransactionIdOrderByImageSeq(generalTransaction);
+        List<GeneralTransactionImageDto> updateTransactionImage=null;
+
+        try{ // 이미지 수정
+            updateTransactionImage = updateTransactionImage(generalTransactionImages,multipartFile,generalTransaction);
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.IMAGE_UPDATE_ERROR);
+        }
+        result.setStatus("success");
+        Map<String,Object> data = new HashMap<>();
+        GeneralTransactionDto resultGeneralDto = DataMapper.instance.generalTransactionToDto(generalTransaction);
+        resultGeneralDto.setImages(updateTransactionImage);
+        data.put("data",resultGeneralDto);
+        result.setData(data);
+
+        if(multipartFile!=null && !multipartFile.isEmpty()){
+            if(updateTransactionImage==null){
+                data = new HashMap<>();
+                data.put("message","일반 거래 글 수정 실패");
+                result.setData(data);
+                result.setStatus("fail");
+                resultHttp = HttpStatus.BAD_REQUEST;
+            }
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    private List<GeneralTransactionImageDto> updateTransactionImage(List<GeneralTransactionImage> generalTransactionImages, List<MultipartFile> multipartFile, GeneralTransaction generalTransaction) throws IOException {
+        List<GeneralTransactionImage> deleteList = new ArrayList<>();
+        List<GeneralTransactionImage> updateList = new ArrayList<>();
+        List<GeneralTransactionImage> resultUpdateList = null;
+        // 업데이트 하려는 이미지가 없을 경우
+        if(multipartFile==null ){
+            // DB에는 이미지가 있으면 DB 이미지 삭제
+            generalTransaction.setThumbnail(null);
+            if(!generalTransactionImages.isEmpty()){
+                deleteList.addAll(generalTransactionImages);
+                generalTransactionImageRepository.deleteAll(generalTransactionImages);
+                if(!s3UploadService.deleteImages(deleteList)){
+                    throw new ApiException(ErrorEnum.IMAGE_DELETE_ERROR);
+                }
+                return null;
+            }
+            return null;
+        }
+
+        if(!multipartFile.isEmpty()){
+            //이름 목록
+            List<String> newOriginUrlList =  multipartFile.stream().map(MultipartFile::getOriginalFilename).collect(Collectors.toList());
+            List<String> updateOriginUrlList =  generalTransactionImages.stream().map(GeneralTransactionImage::getOriginName).collect(Collectors.toList());
+            
+            int maxIndex = Math.max(generalTransactionImages.size(), multipartFile.size());
+            for(int i=0;i<maxIndex;i++){
+                GeneralTransactionImage imgEntity = null;
+                if(i > updateOriginUrlList.size()-1){ // 입력 이미지가 많은 경우
+                    // 기존
+                    if(updateOriginUrlList.contains(newOriginUrlList.get(i))){
+                        int updateIndex = updateOriginUrlList.indexOf(newOriginUrlList.get(i));
+                        imgEntity = generalTransactionImages.get(updateIndex);
+                        imgEntity.setImageSeq(i+1);
+                        updateList.add(imgEntity);
+                    }else{
+                        updateList.add(uploadAndConvertFileToEntity(multipartFile.get(i),i+1,generalTransaction));
+                    }
+                }else if(i > newOriginUrlList.size()-1){ // 기존 이미지가 많은 경우
+                    // 새로운 목록은 다 수정 했기 때문에 남은건 새로운 목록에 있는지 확인 후 삭제
+                    imgEntity = generalTransactionImages.get(i);
+                    if(!newOriginUrlList.contains(imgEntity.getOriginName())){
+                        deleteList.add(imgEntity);
+                    }
+                }else{ // 크기 같을 때
+                    imgEntity = generalTransactionImages.get(i);
+                    if(newOriginUrlList.contains(imgEntity.getOriginName())){ // 새로운 목록에 기존 이미지 있음
+                        if(imgEntity.getOriginName().equals(newOriginUrlList.get(i))){ // 기존과 수정 위치가 같음
+                            updateList.add(imgEntity); // 그대로 수정 목록에 추가
+                        }else if(updateOriginUrlList.contains(newOriginUrlList.get(i))){ //----------- 여기 수정해야됨 양쪽 목록에 있지만 서로 위치가 다를때
+                            int updateIndex = updateOriginUrlList.indexOf(newOriginUrlList.get(i));
+                            imgEntity = generalTransactionImages.get(updateIndex);
+                            imgEntity.setImageSeq(i+1);
+                            updateList.add(imgEntity);
+                        }else{
+                            // 새로 추가된 사진이므로 업로드 후 수정 목록에 추가
+                            updateList.add(uploadAndConvertFileToEntity(multipartFile.get(i),i+1,generalTransaction));
+                        }
+                    }else{ // 현재 기존 이미지 새로운 목록에 없음
+                        if(updateOriginUrlList.contains(newOriginUrlList.get(i))){ // 현재 기존과는 다르지만 기존 목록에 있던것 이므로 위치 수정
+                            int updateIndex = updateOriginUrlList.indexOf(newOriginUrlList.get(i));
+                            imgEntity = generalTransactionImages.get(updateIndex);
+                            imgEntity.setImageSeq(i+1);
+                            updateList.add(imgEntity);
+                            imgEntity = generalTransactionImages.get(i);
+                            deleteList.add(imgEntity);
+                        }else{ //  현재 목록 기존 목록 아무것도 일치 안함 삭제
+                            deleteList.add(imgEntity);
+                            updateList.add(uploadAndConvertFileToEntity(multipartFile.get(i),i+1,generalTransaction));
+                        }
+                    }
+                }
+            }
+
+            // 삭제 목록 이미지 s3에서 삭제 후 DB 삭제
+            if(!deleteList.isEmpty()){
+                generalTransactionImageRepository.deleteAll(deleteList);
+                if(!s3UploadService.deleteImages(deleteList)){
+                    throw new ApiException(ErrorEnum.IMAGE_DELETE_ERROR);
+                }
+            }
+
+            // 나머지 이미지 DB 삽입 /DB 삽입 실패 시 업로드된 이미지 삭제
+            if(!updateList.isEmpty()){
+                try{
+                    resultUpdateList= generalTransactionImageRepository.saveAll(updateList);
+                }catch (Exception e ){
+                    s3UploadService.deleteImages(updateList);
+                }
+                generalTransaction.setThumbnail(resultUpdateList.get(0).getUploadUrl());
+            }
+        }
+        return resultUpdateList==null?null: resultUpdateList.stream().map(DataMapper.instance::generalImageEntityToDto).collect(Collectors.toList());
+    }
+
+    private void updateTransactionEntity(GeneralTransaction generalTransaction, GeneralTransactionFormDto generalTransactionFormDto) {
+        generalTransaction.setTitle(generalTransactionFormDto.getTitle());
+        generalTransaction.setContent(generalTransactionFormDto.getContent());
+        generalTransaction.setPrice(generalTransactionFormDto.getPrice());
+        generalTransaction.setTransactionMode(generalTransactionFormDto.getTransactionMode());
+        generalTransaction.setLocation(generalTransactionFormDto.getLocation());
+        generalTransaction.setPayment(generalTransactionFormDto.getPayment());
+    }
+
+//    private List<GeneralTransactionImage> listUploadAndConvertFileToEntity(List<MultipartFile> multipartFiles,GeneralTransaction generalTransaction){
+//        if (multipartFiles.isEmpty()) {
+//            return null;
+//        }
+//        List<GeneralTransactionImage> result = new ArrayList<>();
+//        for(int i=0;i<multipartFiles.size();i++){
+//            MultipartFile file = multipartFiles.get(i);
+//            GeneralTransactionImage generalTransactionImage = new GeneralTransactionImage();
+//            generalTransactionImage.setOriginName(file.getOriginalFilename());
+//            generalTransactionImage.setImageSeq(i+1);
+//            generalTransactionImage.setImageName(makeUploadFileName(generalTransactionImage.getOriginName()));
+//            generalTransactionImage.setUploadUrl(s3UploadService.uploadImage(file,generalTransactionImage.getImageName()));
+//            generalTransactionImage.setGeneralTransactionId(generalTransaction);
+//            result.add(generalTransactionImage);
+//        }
+//        generalTransaction.setThumbnail(result.get(0).getUploadUrl());
+//        return result;
+//    }
+
+    private GeneralTransactionImage uploadAndConvertFileToEntity(MultipartFile multipartFile, int seqIndex, GeneralTransaction generalTransaction){
+        if (multipartFile.isEmpty()) {
+            return null;
+        }
+        GeneralTransactionImage result = new GeneralTransactionImage();
+        result.setOriginName(multipartFile.getOriginalFilename());
+        result.setImageSeq(seqIndex);
+        result.setImageName(makeUploadFileName(result.getOriginName()));
+        result.setUploadUrl(s3UploadService.uploadImage(multipartFile,result.getImageName()));
+        result.setGeneralTransactionId(generalTransaction);
+        return result;
+    }
 }

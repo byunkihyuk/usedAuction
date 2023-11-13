@@ -5,11 +5,11 @@ import lombok.Data;
 import java.sql.Timestamp;
 
 @Data
-public class GeneralImageDto {
+public class GeneralTransactionImageDto {
     private Integer generalImageId;
     private Integer imageSeq;
-    private String originUrl;
-    private String imageUrl;
+    private String originName;
+    private String imageName;
     private String uploadUrl;
     private Timestamp createdAt;
     private Integer generalTransactionId;

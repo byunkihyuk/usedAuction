@@ -29,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
       return userRepository.findOneWithAuthoritiesByUsername(username)
          .map(user -> createUser(username, user))
          //.orElseThrow(() -> new UsernameNotFoundException(username + " -> 데이터베이스에서 찾을 수 없습니다."));
-         .orElseThrow(() -> new ApiException(ErrorEnum.SIGN_IN_FAIL));
+         .orElseThrow(() -> new ApiException(ErrorEnum.SIGN_IN_ERROR));
    }
 
    private org.springframework.security.core.userdetails.User createUser(String username, com.example.usedAuction.entity.User user) {

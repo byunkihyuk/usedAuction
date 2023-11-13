@@ -10,4 +10,5 @@ public interface GeneralTransactionImageRepository extends JpaRepository<General
 
   List<GeneralTransactionImage> findAllByGeneralTransactionId(GeneralTransaction generalTransactionId);
 
-  }
+  List<GeneralTransactionImage> findAllByGeneralTransactionIdOrderByImageSeq(GeneralTransaction generalTransaction);
+}

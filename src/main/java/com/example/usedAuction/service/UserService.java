@@ -45,7 +45,7 @@ public class UserService {
         try{
             userRepository.save(user);
         }catch (Exception e){
-            throw new ApiException(ErrorEnum.SIGN_UP_FAIL);
+            throw new ApiException(ErrorEnum.SIGN_UP_ERROR);
         }
 
         Map<String,Object> data = new HashMap<String,Object>();

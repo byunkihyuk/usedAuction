@@ -24,6 +24,8 @@ public class GeneralTransaction {
     @JoinColumn(name = "user_id")
     private User userId;
 
+    private String thumbnail;
+
     @Column(nullable = false)
     private String title;
 
