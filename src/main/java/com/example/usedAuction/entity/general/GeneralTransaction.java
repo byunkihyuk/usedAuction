@@ -1,5 +1,6 @@
-package com.example.usedAuction.entity;
+package com.example.usedAuction.entity.general;
 
+import com.example.usedAuction.entity.user.User;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;

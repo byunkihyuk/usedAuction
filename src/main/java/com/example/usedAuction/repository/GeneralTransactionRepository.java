@@ -1,11 +1,8 @@
 package com.example.usedAuction.repository;
 
 
-import com.example.usedAuction.entity.GeneralTransaction;
-import com.example.usedAuction.entity.GeneralTransactionImage;
+import com.example.usedAuction.entity.general.GeneralTransaction;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
 
 public interface GeneralTransactionRepository extends JpaRepository<GeneralTransaction,Integer> {
 

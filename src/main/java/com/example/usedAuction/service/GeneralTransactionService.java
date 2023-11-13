@@ -6,9 +6,9 @@ import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
-import com.example.usedAuction.entity.GeneralTransaction;
-import com.example.usedAuction.entity.GeneralTransactionImage;
-import com.example.usedAuction.entity.User;
+import com.example.usedAuction.entity.general.GeneralTransaction;
+import com.example.usedAuction.entity.general.GeneralTransactionImage;
+import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.GeneralTransactionImageRepository;
@@ -24,13 +24,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor

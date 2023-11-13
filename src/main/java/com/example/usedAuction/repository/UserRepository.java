@@ -1,6 +1,6 @@
 package com.example.usedAuction.repository;
 
-import com.example.usedAuction.entity.User;
+import com.example.usedAuction.entity.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

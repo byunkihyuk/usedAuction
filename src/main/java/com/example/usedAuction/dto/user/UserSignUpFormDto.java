@@ -1,6 +1,5 @@
 package com.example.usedAuction.dto.user;
 
-import com.example.usedAuction.entity.User;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

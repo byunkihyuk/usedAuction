@@ -6,7 +6,7 @@ import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
-import com.example.usedAuction.entity.User;
+import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.UserRepository;
@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
