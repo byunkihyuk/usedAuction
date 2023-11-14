@@ -1,4 +1,4 @@
-package com.example.usedAuction.controller;
+package com.example.usedAuction.controller.user;
 
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;

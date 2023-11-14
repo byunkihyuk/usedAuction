@@ -1,4 +1,4 @@
-package com.example.usedAuction.controller;
+package com.example.usedAuction.controller.general;
 
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.service.general.GeneralTransactionService;
