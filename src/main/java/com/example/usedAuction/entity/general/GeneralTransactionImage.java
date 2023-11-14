@@ -1,4 +1,4 @@
-package com.example.usedAuction.entity;
+package com.example.usedAuction.entity.general;
 
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;

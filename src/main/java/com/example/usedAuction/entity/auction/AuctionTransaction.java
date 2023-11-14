@@ -1,6 +1,9 @@
-package com.example.usedAuction.entity;
+package com.example.usedAuction.entity.auction;
 
+import com.example.usedAuction.entity.general.GeneralTransactionImage;
+import com.example.usedAuction.entity.user.User;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -13,36 +16,42 @@ import java.util.List;
 @Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class GeneralTransaction {
-
+public class AuctionTransaction {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "general_transaction_id")
-    private Integer generalTransactionId;
+    @Column(name = "auction_transaction_id")
+    private Integer auctionTransactionId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User userId;
+    @JoinColumn(name = "seller")
+    private User seller;
 
+    @ManyToOne
+    @JoinColumn(name = "buyer")
+    private User buyer;
     private String thumbnail;
-
-    @Column(nullable = false)
     private String title;
 
     private String content;
 
-    @Column(nullable = false)
     private Integer price;
 
-    @Column(name = "transaction_mode",nullable = false) // 거래 모드 (직거래, 택배 거래)
-    private String transactionMode;
+    private String transaction_mode;
 
     private String location;
 
-    @Column(name = "transaction_state",nullable = false) // 거래 상태
-    private String transactionState;
+    private String transaction_state;
 
     private String payment;
+
+    @Column(columnDefinition = "integer default 0")
+    private Integer viewCount;
+
+    @Column(name = "started_at",nullable = false)
+    private Timestamp startedAt;
+
+    @Column(name = "finished_at",nullable = false)
+    private Timestamp finishedAt;
 
     @CreatedDate
     @Column(name = "created_at",nullable = false)

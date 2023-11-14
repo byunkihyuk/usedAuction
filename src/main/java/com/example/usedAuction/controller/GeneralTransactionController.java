@@ -1,19 +1,12 @@
 package com.example.usedAuction.controller;
 
-import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
-import com.example.usedAuction.errors.ApiException;
-import com.example.usedAuction.errors.ErrorEnum;
-import com.example.usedAuction.service.GeneralTransactionService;
+import com.example.usedAuction.service.general.GeneralTransactionService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
 
 import javax.validation.Valid;
 import java.util.List;

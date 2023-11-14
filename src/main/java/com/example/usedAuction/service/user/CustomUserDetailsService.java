@@ -1,21 +1,18 @@
-package com.example.usedAuction.service;
+package com.example.usedAuction.service.user;
 
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
-import com.example.usedAuction.repository.UserRepository;
+import com.example.usedAuction.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Component("userDetailsService")
 @RequiredArgsConstructor
@@ -32,7 +29,7 @@ public class CustomUserDetailsService implements UserDetailsService {
          .orElseThrow(() -> new ApiException(ErrorEnum.SIGN_IN_ERROR));
    }
 
-   private org.springframework.security.core.userdetails.User createUser(String username, com.example.usedAuction.entity.User user) {
+   private org.springframework.security.core.userdetails.User createUser(String username, com.example.usedAuction.entity.user.User user) {
 //      if (!user.isActivated()) {
 //         throw new RuntimeException(username + " -> 활성화되어 있지 않습니다.");
 //      }
