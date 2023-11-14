@@ -1,4 +1,4 @@
-package com.example.usedAuction.repository;
+package com.example.usedAuction.repository.general;
 
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;

@@ -2,7 +2,7 @@ package com.example.usedAuction.controller;
 
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
-import com.example.usedAuction.service.UserService;
+import com.example.usedAuction.service.user.UserService;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;

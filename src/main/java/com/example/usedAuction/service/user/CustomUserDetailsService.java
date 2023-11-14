@@ -1,8 +1,8 @@
-package com.example.usedAuction.service;
+package com.example.usedAuction.service.user;
 
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
-import com.example.usedAuction.repository.UserRepository;
+import com.example.usedAuction.repository.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

@@ -1,4 +1,4 @@
-package com.example.usedAuction.service;
+package com.example.usedAuction.service.general;
 
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.General.GeneralTransactionImageDto;
@@ -11,10 +11,12 @@ import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
-import com.example.usedAuction.repository.GeneralTransactionImageRepository;
-import com.example.usedAuction.repository.GeneralTransactionRepository;
-import com.example.usedAuction.repository.UserRepository;
+import com.example.usedAuction.repository.general.GeneralTransactionImageRepository;
+import com.example.usedAuction.repository.general.GeneralTransactionRepository;
+import com.example.usedAuction.repository.user.UserRepository;
+import com.example.usedAuction.service.aws.S3UploadService;
 import com.example.usedAuction.util.SecurityUtil;
+import com.example.usedAuction.util.ServiceUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -77,7 +79,7 @@ public class GeneralTransactionService {
                     generalTransactionImageDto.setImageSeq(i);
                     generalTransactionImageDto.setOriginName(image.getOriginalFilename());
 
-                    String imageFilename = makeUploadFileName(generalTransactionImageDto.getOriginName());
+                    String imageFilename = ServiceUtil.makeUploadFileName(generalTransactionImageDto.getOriginName());
                     generalTransactionImageDto.setImageName(imageFilename);
                     generalTransactionImageDto.setUploadUrl(s3UploadService.uploadImage(image,imageFilename));
 
@@ -110,10 +112,6 @@ public class GeneralTransactionService {
         return ResponseEntity.status(status).body(result);
     }
 
-    private String makeUploadFileName(String imageFilename) {
-        String extension = imageFilename.substring(imageFilename.lastIndexOf(".")+1);
-        return  UUID.randomUUID() + "."+extension;
-    }
 
     @Transactional(readOnly = true)
     public ResponseEntity<Object> getGeneralTransaction(Integer generalTransactionId) {
@@ -341,7 +339,7 @@ public class GeneralTransactionService {
         GeneralTransactionImage result = new GeneralTransactionImage();
         result.setOriginName(multipartFile.getOriginalFilename());
         result.setImageSeq(seqIndex);
-        result.setImageName(makeUploadFileName(result.getOriginName()));
+        result.setImageName(ServiceUtil.makeUploadFileName(result.getOriginName()));
         result.setUploadUrl(s3UploadService.uploadImage(multipartFile,result.getImageName()));
         result.setGeneralTransactionId(generalTransaction);
         return result;
