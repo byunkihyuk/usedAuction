@@ -30,5 +30,12 @@ public class AuctionTransactionController {
         return auctionTransactionService.getAuctionTransaction(auctionTransactionId);
     }
 
+    @GetMapping(value = "/auction")
+    public ResponseEntity<Object> getAllAuctionTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
+                                                           @RequestParam(required = false,defaultValue = "10") Integer size,
+                                                           @RequestParam(required = false,defaultValue = "asc") String sort){
+        return auctionTransactionService.getAllAuctionTransaciton(page,size,sort);
+    }
+
 
 }
