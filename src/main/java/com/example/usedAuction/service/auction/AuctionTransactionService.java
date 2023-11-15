@@ -1,15 +1,12 @@
 package com.example.usedAuction.service.auction;
 
 import com.example.usedAuction.dto.DataMapper;
-import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
-import com.example.usedAuction.entity.general.GeneralTransaction;
-import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -20,6 +17,9 @@ import com.example.usedAuction.service.aws.S3UploadService;
 import com.example.usedAuction.util.SecurityUtil;
 import com.example.usedAuction.util.ServiceUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -122,4 +122,15 @@ public class AuctionTransactionService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    public ResponseEntity<Object> getAllAuctionTransaciton(Integer page, Integer size, String sort) {
+        Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
+                Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page,size, pageableSort);
+        List<AuctionTransactionDto> resultGeneralTransaction = auctionTransactionRepository.findAll(pageable).stream()
+                .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(resultGeneralTransaction);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 }
