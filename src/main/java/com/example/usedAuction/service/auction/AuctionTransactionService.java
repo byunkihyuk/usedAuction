@@ -1,12 +1,15 @@
 package com.example.usedAuction.service.auction;
 
 import com.example.usedAuction.dto.DataMapper;
+import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
+import com.example.usedAuction.entity.general.GeneralTransaction;
+import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -20,12 +23,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +37,7 @@ public class AuctionTransactionService {
     private final AuctionTransactionImageRepository auctionTransactionImageRepository;
     private final S3UploadService s3UploadService;
 
+    @Transactional
     public ResponseEntity<Object> postAuctionTransaction(AuctionTransactionFormDto auctionTransactionFormDto, List<MultipartFile> multipartFileList) {
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.CREATED;
@@ -101,4 +103,23 @@ public class AuctionTransactionService {
         }
         return ResponseEntity.status(status).body(result);
     }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<Object> getAuctionTransaction(Integer auctionTransactionId) {
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        List<AuctionTransactionImage> auctionTransactionImages = auctionTransactionImageRepository.findAllByAuctionTransactionIdOrderByImageSeq(auctionTransaction);
+
+        AuctionTransactionDto resultAuctionTransactionDto = DataMapper.instance.auctionTransactionToDto(auctionTransaction);
+        resultAuctionTransactionDto.setImages(auctionTransactionImages.stream()
+                .map(DataMapper.instance::auctionImageEntityToDto)
+                .collect(Collectors.toList()));
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setData(resultAuctionTransactionDto);
+        result.setStatus("success");
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
 }

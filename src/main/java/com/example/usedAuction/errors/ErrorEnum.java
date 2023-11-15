@@ -17,7 +17,9 @@ public enum ErrorEnum {
     IMAGE_UPDATE_ERROR(HttpStatus.BAD_REQUEST," 이미지 수정 에러"),
     IMAGE_MAX_COUNT(HttpStatus.BAD_REQUEST,"이미지는 10개 이하로 업로드 가능합니다."),
     IMAGE_DELETE_ERROR(HttpStatus.BAD_REQUEST,"이미지 삭제 에러"),
-    IMAGE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST,"이미지 업로드 에러");
+    IMAGE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST,"이미지 업로드 에러"),
+    //경매 거래 글
+    NOT_FOUND_AUCTION_TRANSACTION(HttpStatus.BAD_REQUEST,"없는 경매 거래 글 입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
