@@ -50,6 +50,7 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.POST, "/api/sign-in").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/general/**").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/general").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/auction/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
