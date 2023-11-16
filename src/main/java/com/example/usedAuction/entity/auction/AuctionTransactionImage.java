@@ -1,17 +1,25 @@
 package com.example.usedAuction.entity.auction;
 
+import com.example.usedAuction.entity.TransactionImage;
 import com.example.usedAuction.entity.general.GeneralTransaction;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import org.hibernate.Transaction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-public class AuctionTransactionImage {
+@AllArgsConstructor
+@NoArgsConstructor
+public class AuctionTransactionImage extends TransactionImage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "auction_image_id")
