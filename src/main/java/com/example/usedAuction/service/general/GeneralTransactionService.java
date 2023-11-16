@@ -6,6 +6,7 @@ import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
+import com.example.usedAuction.entity.TransactionImage;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.user.User;

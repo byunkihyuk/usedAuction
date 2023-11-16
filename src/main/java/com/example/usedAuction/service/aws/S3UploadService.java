@@ -2,15 +2,19 @@ package com.example.usedAuction.service.aws;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
+import com.example.usedAuction.entity.TransactionImage;
+import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Transaction;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -35,15 +39,15 @@ public class S3UploadService {
         return amazonS3.getUrl(bucket,imgName).toString();
     }
 
-    public boolean deleteImages(List<GeneralTransactionImage> generalTransactionImageList) {
-        if(generalTransactionImageList.isEmpty()){
+    public boolean deleteImages(List<?> deleteImageList) {
+        if(deleteImageList.isEmpty()){
             return true;
         }
-        int count = generalTransactionImageList.size();
-        for(GeneralTransactionImage img : generalTransactionImageList) {
-            boolean isImage = amazonS3.doesObjectExist(bucket, img.getImageName());
+        int count = deleteImageList.size();
+        for(Object obj : deleteImageList){
+            boolean isImage = amazonS3.doesObjectExist(bucket,  ((TransactionImage)obj).getImageName());
             if (isImage) {
-                amazonS3.deleteObject(bucket, img.getImageName());
+                amazonS3.deleteObject(bucket,  ((TransactionImage)obj).getImageName());
                 count--;
             }
         }
