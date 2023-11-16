@@ -1,6 +1,8 @@
 package com.example.usedAuction.controller.auction;
 
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
+import com.example.usedAuction.entity.TransactionImage;
+import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.service.auction.AuctionTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -9,6 +11,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -35,6 +39,11 @@ public class AuctionTransactionController {
                                                            @RequestParam(required = false,defaultValue = "10") Integer size,
                                                            @RequestParam(required = false,defaultValue = "asc") String sort){
         return auctionTransactionService.getAllAuctionTransaciton(page,size,sort);
+    }
+
+    @DeleteMapping(value = "/auction/{auctionTransactionId}")
+    public ResponseEntity<Object> deleteAuctionTransaction(@PathVariable Integer auctionTransactionId){
+        return auctionTransactionService.deleteAuctionTransaction(auctionTransactionId);
     }
 
 

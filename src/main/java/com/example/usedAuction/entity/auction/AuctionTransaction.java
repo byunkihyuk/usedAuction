@@ -61,6 +61,6 @@ public class AuctionTransaction {
     @Column(name = "updated_at")
     private Timestamp updatedAt;
 
-    @OneToMany(mappedBy = "generalTransactionId", cascade = CascadeType.REMOVE, orphanRemoval=true)
-    private List<GeneralTransactionImage> generalTransactionImageList = new ArrayList<>();
+    @OneToMany(mappedBy = "auctionTransactionId", cascade = CascadeType.REMOVE)
+    private List<AuctionTransactionImage> auctionTransactionImageList = new ArrayList<>();
 }

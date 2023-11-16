@@ -1,12 +1,17 @@
 package com.example.usedAuction.service.auction;
 
 import com.example.usedAuction.dto.DataMapper;
+import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
 import com.example.usedAuction.dto.result.ResponseResult;
+import com.example.usedAuction.dto.result.ResponseResultError;
+import com.example.usedAuction.entity.TransactionImage;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
+import com.example.usedAuction.entity.general.GeneralTransaction;
+import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -132,5 +137,32 @@ public class AuctionTransactionService {
         result.setStatus("success");
         result.setData(resultGeneralTransaction);
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> deleteAuctionTransaction(Integer auctionTransactionId) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+        //s3 이미지 삭제 하기 위해서 가져옴
+        List<AuctionTransactionImage> auctionTransactionImageList = auctionTransactionImageRepository.findAllByAuctionTransactionId(auctionTransaction);
+
+        try{
+            auctionTransactionRepository.delete(auctionTransaction);
+            auctionTransactionImageRepository.deleteAll(auctionTransactionImageList);
+            s3UploadService.deleteImages(auctionTransactionImageList);
+            result.setStatus("success");
+            AuctionTransactionDto auctionTransactionDto = DataMapper.instance.auctionTransactionToDto(auctionTransaction);
+            Map<String,Object> data = new HashMap<>();
+            data.put("message",auctionTransactionDto.getAuctionTransactionId()+"번 글 삭제 성공");
+            result.setData(data);
+        }catch (Exception e){
+            ResponseResultError error = new ResponseResultError("error","글 삭제 실패");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
+
+        return ResponseEntity.status(status).body(result);
     }
 }
