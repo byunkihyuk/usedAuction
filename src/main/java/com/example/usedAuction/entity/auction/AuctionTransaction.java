@@ -29,7 +29,9 @@ public class AuctionTransaction {
     @ManyToOne
     @JoinColumn(name = "buyer")
     private User buyer;
+
     private String thumbnail;
+
     private String title;
 
     private String content;
@@ -45,7 +47,7 @@ public class AuctionTransaction {
     private String payment;
 
     @Column(columnDefinition = "integer default 0")
-    private Integer viewCount;
+    private Integer viewCount=0;
 
     @Column(name = "started_at",nullable = false)
     private Timestamp startedAt;
