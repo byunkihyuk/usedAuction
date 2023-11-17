@@ -61,7 +61,7 @@ public class GeneralTransactionService {
                     .flatMap(userRepository::findOneWithAuthoritiesByUsername)
                     .orElseThrow(()->new ApiException(ErrorEnum.UNAUTHORIZED_ERROR));
             GeneralTransaction generalTransaction = DataMapper.instance.generalTransactionFormToEntity(generalTransactionFormDto);
-            generalTransaction.setUserId(loginUser);
+            generalTransaction.setSeller(loginUser);
             GeneralTransaction getGeneralTransaction=null;
             // 게시글 저장
             try{
@@ -344,5 +344,15 @@ public class GeneralTransactionService {
         result.setUploadUrl(s3UploadService.uploadImage(multipartFile,result.getImageName()));
         result.setGeneralTransactionId(generalTransaction);
         return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<GeneralTransactionDto> topGeneralList(String sortOption) {
+        Sort sort = Sort.by("viewCount").descending();
+        if(sortOption.equals("createdAt")){
+            sort = Sort.by("createdAt").descending();
+        }
+        return generalTransactionRepository.findTop10ByTransactionStateNot("판매완료",sort)
+                .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
     }
 }

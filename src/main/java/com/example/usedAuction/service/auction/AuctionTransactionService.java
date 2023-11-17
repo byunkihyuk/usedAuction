@@ -303,7 +303,7 @@ public class AuctionTransactionService {
         auctionTransaction.setPayment(auctionTransactionFormDto.getPayment());
     }
 
-    private AuctionTransactionImage uploadAndConvertFileToEntity(MultipartFile multipartFile, int seqIndex, AuctionTransaction auctionTransaction){
+    private AuctionTransactionImage uploadAndConvertFileToEntity(MultipartFile multipartFile, int seqIndex, AuctionTransaction auctionTransaction) {
         if (multipartFile.isEmpty()) {
             return null;
         }
@@ -311,8 +311,19 @@ public class AuctionTransactionService {
         result.setOriginName(multipartFile.getOriginalFilename());
         result.setImageSeq(seqIndex);
         result.setImageName(ServiceUtil.makeUploadFileName(result.getOriginName()));
-        result.setUploadUrl(s3UploadService.uploadImage(multipartFile,result.getImageName()));
+        result.setUploadUrl(s3UploadService.uploadImage(multipartFile, result.getImageName()));
         result.setAuctionTransactionId(auctionTransaction);
         return result;
     }
+
+    @Transactional(readOnly = true)
+    public List<AuctionTransactionDto> topAuctionList(String sortOption) {
+        Sort sort = Sort.by("viewCount").descending();
+        if(sortOption.equals("createdAt")){
+            sort = Sort.by("createdAt").descending();
+        }
+        return  auctionTransactionRepository.findTop10ByTransactionStateNot("판매완료",sort)
+                .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+    }
+
 }
