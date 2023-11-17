@@ -38,7 +38,16 @@ public class AuctionTransactionController {
     public ResponseEntity<Object> getAllAuctionTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
                                                            @RequestParam(required = false,defaultValue = "10") Integer size,
                                                            @RequestParam(required = false,defaultValue = "asc") String sort){
-        return auctionTransactionService.getAllAuctionTransaciton(page,size,sort);
+        return auctionTransactionService.getAllAuctionTransaction(page,size,sort);
+    }
+
+    @PutMapping(value = "/auction/{auctionTransactionId}", consumes = {
+            MediaType.APPLICATION_JSON_VALUE,
+            MediaType.MULTIPART_FORM_DATA_VALUE})
+    public ResponseEntity<Object> updateAuctionTransaction(@PathVariable(value = "auctionTransactionId") Integer auctionTransactionId,
+                                                           @RequestPart @Valid AuctionTransactionFormDto auctionTransactionFormDto,
+                                                           @RequestPart(required = false) List<MultipartFile> multipartFileList){
+        return auctionTransactionService.updateAuctionTransaction(auctionTransactionId,auctionTransactionFormDto,multipartFileList);
     }
 
     @DeleteMapping(value = "/auction/{auctionTransactionId}")

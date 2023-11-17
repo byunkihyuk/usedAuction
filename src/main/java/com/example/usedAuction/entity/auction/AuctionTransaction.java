@@ -36,11 +36,11 @@ public class AuctionTransaction {
 
     private Integer price;
 
-    private String transaction_mode;
+    private String transactionMode;
 
     private String location;
 
-    private String transaction_state;
+    private String transactionState;
 
     private String payment;
 
