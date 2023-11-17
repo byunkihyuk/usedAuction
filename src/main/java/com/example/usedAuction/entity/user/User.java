@@ -1,5 +1,6 @@
 package com.example.usedAuction.entity.user;
 
+import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
@@ -47,7 +48,16 @@ public class User {
     @Column(name ="updated_at")
     private Timestamp updatedAt;
 
-    @OneToMany(mappedBy = "userId", cascade = CascadeType.REMOVE)
-    private List<GeneralTransaction> generalTransactionList = new ArrayList<>();
+    @OneToMany(mappedBy = "seller", cascade = CascadeType.REMOVE)
+    private List<GeneralTransaction> generalTransactionSellList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "seller", cascade = CascadeType.REMOVE)
+    private List<AuctionTransaction> auctionTransactionSellList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "buyer", cascade = CascadeType.REMOVE)
+    private List<GeneralTransaction> generalTransactionBuyList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "buyer", cascade = CascadeType.REMOVE)
+    private List<AuctionTransaction> auctionTransactionBuyList = new ArrayList<>();
 
 }

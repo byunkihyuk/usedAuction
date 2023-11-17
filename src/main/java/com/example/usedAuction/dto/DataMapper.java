@@ -28,7 +28,8 @@ public interface DataMapper {
     /***
      * entity to dto method
      * */
-    @Mapping(source = "userId.userId",target = "userId")
+    @Mapping(source = "seller.userId",target = "seller")
+    @Mapping(source = "buyer.userId",target = "buyer")
     GeneralTransactionDto generalTransactionToDto(GeneralTransaction generalTransaction);
 
     @Mapping(source = "generalTransactionId.generalTransactionId",target = "generalTransactionId")

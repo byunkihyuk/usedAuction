@@ -22,8 +22,12 @@ public class GeneralTransaction {
     private Integer generalTransactionId;
 
     @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User userId;
+    @JoinColumn(name = "seller")
+    private User seller;
+
+    @ManyToOne
+    @JoinColumn(name = "buyer")
+    private User buyer;
 
     private String thumbnail;
 
@@ -44,6 +48,9 @@ public class GeneralTransaction {
     private String transactionState;
 
     private String payment;
+
+    @Column(columnDefinition = "integer default 0")
+    private Integer viewCount=0;
 
     @CreatedDate
     @Column(name = "created_at",nullable = false)

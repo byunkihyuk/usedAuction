@@ -14,6 +14,8 @@ import java.util.List;
 public class GeneralTransactionDto {
 
     private Integer generalTransactionId;
+    private Integer seller;
+    private Integer buyer;
     private String thumbnail;
     private List<GeneralTransactionImageDto> images;
     @NotBlank(message = "제목을 입력하세요.")
@@ -25,7 +27,7 @@ public class GeneralTransactionDto {
     private String location;
     private String transactionState;
     private String payment;
-    private Integer userId;
+    private Integer viewCount=0;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 

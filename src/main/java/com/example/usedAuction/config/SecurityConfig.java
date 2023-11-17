@@ -51,6 +51,7 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/api/general/**").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/general").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/auction/**").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/main").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
