@@ -6,6 +6,7 @@ import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
+import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
@@ -47,4 +48,6 @@ public interface DataMapper {
     @Mapping(source = "seller.userId",target = "seller")
     @Mapping(source = "buyer.userId",target = "buyer")
     AuctionTransactionDto auctionTransactionToDto(AuctionTransaction auctionTransaction);
+
+    UserDto UserEntityToDto(User user);
 }
