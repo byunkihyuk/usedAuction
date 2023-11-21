@@ -1,7 +1,9 @@
 package com.example.usedAuction.controller.user;
 
+import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
+import com.example.usedAuction.dto.user.UserUpdateForm;
 import com.example.usedAuction.service.user.UserService;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -38,8 +40,13 @@ public class UserController {
         return userService.signIn(userSignInFormDto);
     }
 
+
     @GetMapping(value = "/user/{userId}")
-    public ResponseEntity<Object> getMyPage(@PathVariable Integer userId){
+    public ResponseEntity<Object> getMyPage(@PathVariable Integer userId) {
         return userService.getUserPage(userId);
+    }
+    @PutMapping(value = "/user/{userId}")
+    public ResponseEntity<Object> updateUser(@PathVariable Integer userId, @RequestBody @Valid UserUpdateForm userUpdateForm){
+        return userService.updateUser(userId,userUpdateForm);
     }
 }

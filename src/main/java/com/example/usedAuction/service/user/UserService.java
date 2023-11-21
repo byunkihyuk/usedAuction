@@ -7,6 +7,7 @@ import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
+import com.example.usedAuction.dto.user.UserUpdateForm;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -58,7 +59,8 @@ public class UserService {
     @Transactional(readOnly = true)
     public String findByUsername(String username) {
 
-        User user = userRepository.findByUsername(username);
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
         if(user!=null){
             return "Y";
         }
@@ -67,7 +69,8 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public String findByNickname(String nickname) {
-        User user = userRepository.findByNickname(nickname);
+        User user = userRepository.findByNickname(nickname)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
         if(user!=null){
             return "Y";
         }
@@ -106,7 +109,7 @@ public class UserService {
         // 검색한 유저 정보
         // 없으면 유저가 없는 에러
         User user = userRepository.findById(userId)
-                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
 
         HttpStatus httpStatus = HttpStatus.OK;
         ResponseResult<Object> result = new ResponseResult<>();
@@ -114,10 +117,10 @@ public class UserService {
         UserDto userDto = DataMapper.instance.UserEntityToDto(user);
 
         // 본인
-        if(username.equals(user.getUsername())){
+        if (username.equals(user.getUsername())) {
             userDto.setPassword("");
             result.setData(userDto);
-        }else{ // 본인이 아님
+        } else { // 본인이 아님
             userDto.setPassword("");
             userDto.setAddress("");
             userDto.setDetailAddress("");
@@ -126,6 +129,44 @@ public class UserService {
         }
 
         return ResponseEntity.status(httpStatus).body(result);
+    }
+    public ResponseEntity<Object> updateUser(Integer userId, UserUpdateForm userUpdateForm) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+        Map<String,Object> failData = new HashMap<>();
+
+        String username = SecurityUtil.getCurrentUsername().orElse("");
+
+        User loginUser = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+        User idUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+        //userUpdateForm.setPassword(passwordEncoder.encode(userUpdateForm.getPassword()));
+
+        if(!loginUser.getUsername().equals(idUser.getUsername())){
+            status = HttpStatus.BAD_REQUEST;
+            result.setStatus("fail");
+            failData.put("message","본인이 아닙니다.");
+            result.setData(failData);
+            return ResponseEntity.status(status).body(result);
+        }
+
+        if(userUpdateForm.getPassword()==null || !passwordEncoder.matches(userUpdateForm.getPassword(),loginUser.getPassword())){
+            status = HttpStatus.BAD_REQUEST;
+            result.setStatus("fail");
+            failData.put("message","현재 비밀번호가 일치하지 않습니다.");
+            result.setData(failData);
+            return ResponseEntity.status(status).body(result);
+        }else{
+            loginUser.setAddress(userUpdateForm.getAddress());
+            loginUser.setDetailAddress(userUpdateForm.getDetailAddress());
+            loginUser.setNickname(userUpdateForm.getNickname());
+            UserDto resultUser =DataMapper.instance.UserEntityToDto(loginUser);
+            resultUser.setPassword("");
+            result.setData(resultUser);
+            result.setStatus("success");
+        }
+        return ResponseEntity.status(status).body(result);
     }
 }
 
