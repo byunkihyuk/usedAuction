@@ -37,4 +37,9 @@ public class UserController {
     public ResponseEntity<Object> signIn(@RequestBody UserSignInFormDto userSignInFormDto){
         return userService.signIn(userSignInFormDto);
     }
+
+    @GetMapping(value = "/user/{userId}")
+    public ResponseEntity<Object> getMyPage(@PathVariable Integer userId){
+        return userService.getUserPage(userId);
+    }
 }

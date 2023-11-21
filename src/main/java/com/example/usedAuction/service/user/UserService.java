@@ -4,12 +4,14 @@ import com.example.usedAuction.config.jwt.JwtFilter;
 import com.example.usedAuction.config.jwt.TokenProvider;
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.result.ResponseResult;
+import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.user.UserRepository;
+import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -96,4 +98,34 @@ public class UserService {
                 .headers(httpHeaders)
                 .body(new ResponseResult<>("success",data));
     }
+
+    public ResponseEntity<Object> getUserPage(Integer userId) {
+        // 로그인한 유저정보
+        String username = SecurityUtil.getCurrentUsername()
+                .orElse("");
+        // 검색한 유저 정보
+        // 없으면 유저가 없는 에러
+        User user = userRepository.findById(userId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        HttpStatus httpStatus = HttpStatus.OK;
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        UserDto userDto = DataMapper.instance.UserEntityToDto(user);
+
+        // 본인
+        if(username.equals(user.getUsername())){
+            userDto.setPassword("");
+            result.setData(userDto);
+        }else{ // 본인이 아님
+            userDto.setPassword("");
+            userDto.setAddress("");
+            userDto.setDetailAddress("");
+            userDto.setPhone("");
+            result.setData(userDto);
+        }
+
+        return ResponseEntity.status(httpStatus).body(result);
+    }
 }
+
