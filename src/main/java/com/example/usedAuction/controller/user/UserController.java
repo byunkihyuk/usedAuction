@@ -49,4 +49,10 @@ public class UserController {
     public ResponseEntity<Object> updateUser(@PathVariable Integer userId, @RequestBody @Valid UserUpdateForm userUpdateForm){
         return userService.updateUser(userId,userUpdateForm);
     }
+
+    @GetMapping(value = "/user/{userId}/general-buy-history")
+    public ResponseEntity<Object> getUserGeneralTransactionList(@PathVariable Integer userId) {
+        return userService.getUserGeneralTransactionList(userId);
+    }
+
 }
