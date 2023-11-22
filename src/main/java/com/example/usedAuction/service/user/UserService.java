@@ -185,7 +185,6 @@ public class UserService {
         HttpStatus status = HttpStatus.OK;
         Map<String,Object> failData = new HashMap<>();
         String username = SecurityUtil.getCurrentUsername().orElse("");
-        System.out.println(username);
         User loginUser = userRepository.findByUsername(username)
                 .orElse(new User());
         User idUser = userRepository.findById(userId)
@@ -196,6 +195,20 @@ public class UserService {
         }
 
         List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllByBuyerOrderByCreatedAtDesc(idUser)
+                .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+        result.setData(generalTransactionDtoList);
+        result.setStatus("success");
+        return ResponseEntity.status(status).body(result);
+    }
+
+    public ResponseEntity<Object> getUserGeneralTransactionSellList(Integer userId) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+
+        User idUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllBySellerOrderByCreatedAtDesc(idUser)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
         result.setData(generalTransactionDtoList);
         result.setStatus("success");

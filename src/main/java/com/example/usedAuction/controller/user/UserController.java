@@ -55,4 +55,9 @@ public class UserController {
         return userService.getUserGeneralTransactionList(userId);
     }
 
+    @GetMapping(value = "/user/{userId}/general-sell-history")
+    public ResponseEntity<Object> getUserGeneralTransactionSellList(@PathVariable Integer userId) {
+        return userService.getUserGeneralTransactionSellList(userId);
+    }
+
 }
