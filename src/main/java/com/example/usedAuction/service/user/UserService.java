@@ -3,14 +3,18 @@ package com.example.usedAuction.service.user;
 import com.example.usedAuction.config.jwt.JwtFilter;
 import com.example.usedAuction.config.jwt.TokenProvider;
 import com.example.usedAuction.dto.DataMapper;
+import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
+import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.dto.user.UserUpdateForm;
+import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
+import com.example.usedAuction.repository.general.GeneralTransactionRepository;
 import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +31,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +42,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final GeneralTransactionRepository generalTransactionRepository;
     @Autowired
     UserRepository userRepository;
 
@@ -102,6 +109,7 @@ public class UserService {
                 .body(new ResponseResult<>("success",data));
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getUserPage(Integer userId) {
         // 로그인한 유저정보
         String username = SecurityUtil.getCurrentUsername()
@@ -130,6 +138,8 @@ public class UserService {
 
         return ResponseEntity.status(httpStatus).body(result);
     }
+
+    @Transactional
     public ResponseEntity<Object> updateUser(Integer userId, UserUpdateForm userUpdateForm) {
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.OK;
@@ -166,6 +176,29 @@ public class UserService {
             result.setData(resultUser);
             result.setStatus("success");
         }
+        return ResponseEntity.status(status).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> getUserGeneralTransactionList(Integer userId) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+        Map<String,Object> failData = new HashMap<>();
+        String username = SecurityUtil.getCurrentUsername().orElse("");
+        System.out.println(username);
+        User loginUser = userRepository.findByUsername(username)
+                .orElse(new User());
+        User idUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(loginUser.getUsername()==null || !loginUser.getUsername().equals(idUser.getUsername())){
+            return ResponseEntity.status(status).body(new ResponseResultError("fail","본인 인증 실패"));
+        }
+
+        List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllByBuyerOrderByCreatedAtDesc(idUser)
+                .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+        result.setData(generalTransactionDtoList);
+        result.setStatus("success");
         return ResponseEntity.status(status).body(result);
     }
 }
