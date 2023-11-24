@@ -53,7 +53,6 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/api/auction/**").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/main").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*").permitAll()
-                        .antMatchers(HttpMethod.GET, "/api/user/*/buy-history").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
