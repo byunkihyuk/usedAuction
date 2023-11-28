@@ -3,15 +3,14 @@ package com.example.usedAuction.service.user;
 import com.example.usedAuction.config.jwt.JwtFilter;
 import com.example.usedAuction.config.jwt.TokenProvider;
 import com.example.usedAuction.dto.DataMapper;
-import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
+import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.dto.user.UserUpdateForm;
-import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -46,6 +45,7 @@ public class UserService {
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final GeneralTransactionRepository generalTransactionRepository;
     private final AuctionTransactionRepository auctionTransactionRepository;
+
     @Autowired
     UserRepository userRepository;
 
@@ -219,5 +219,30 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
+
+    public ResponseEntity<Object> getUserAuctionTransactionBuyList(Integer userId) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+
+        String username = SecurityUtil.getCurrentUsername().orElse("");
+
+        User loginUser = userRepository.findByUsername(username)
+                .orElse(new User());
+
+        User idUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(loginUser.getUsername()==null || !loginUser.getUsername().equals(idUser.getUsername())){
+            return ResponseEntity.status(status).body(new ResponseResultError("fail","본인 인증 실패"));
+        }
+
+        List<AuctionTransactionDto> generalTransactionDtoList = auctionTransactionRepository.findAllByBuyerOrderByCreatedAtDesc(idUser)
+                .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+
+        result.setData(generalTransactionDtoList);
+        result.setStatus("success");
+
+        return ResponseEntity.status(status).body(result);
+    }
 }
 

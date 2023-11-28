@@ -1,16 +1,19 @@
 package com.example.usedAuction.service.auction;
 
 import com.example.usedAuction.dto.DataMapper;
+import com.example.usedAuction.dto.auction.AuctionTransactionBidFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
+import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
+import com.example.usedAuction.repository.auction.AuctionBidRepository;
 import com.example.usedAuction.repository.auction.AuctionTransactionImageRepository;
 import com.example.usedAuction.repository.auction.AuctionTransactionRepository;
 import com.example.usedAuction.repository.user.UserRepository;
@@ -37,6 +40,7 @@ public class AuctionTransactionService {
     private final UserRepository userRepository;
     private final AuctionTransactionRepository auctionTransactionRepository;
     private final AuctionTransactionImageRepository auctionTransactionImageRepository;
+    private final AuctionBidRepository auctionBidRepository;
     private final S3UploadService s3UploadService;
 
     @Transactional
@@ -326,4 +330,36 @@ public class AuctionTransactionService {
                 .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
     }
 
+    @Transactional
+    public ResponseEntity<Object> auctionTransactionBid(AuctionTransactionBidFormDto auctionTransactionBidFormDto, Integer auctionTransactionId) {
+        String username = SecurityUtil.getCurrentUsername().orElse("");
+
+        User loginUser = userRepository.findByUsername(username)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        AuctionBid getAuctionBid = auctionBidRepository.findByAuctionTransactionIdAndBidderId(auctionTransaction,loginUser);
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+
+        if(getAuctionBid==null){
+            AuctionBid auctionBid = new AuctionBid();
+            auctionBid.setAuctionTransactionId(auctionTransaction);
+            auctionBid.setBidderId(loginUser);
+            auctionBid.setPrice(auctionTransactionBidFormDto.getPrice());
+            try{
+                auctionBidRepository.save(auctionBid);
+                result.setData(DataMapper.instance.auctionBidEntityToDto(auctionBid));
+            }catch (Exception e){
+                throw new ApiException(ErrorEnum.FAIL_BID);
+            }
+        }else{
+            getAuctionBid.setPrice(auctionTransactionBidFormDto.getPrice());
+            result.setData(DataMapper.instance.auctionBidEntityToDto(getAuctionBid));
+        }
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 }

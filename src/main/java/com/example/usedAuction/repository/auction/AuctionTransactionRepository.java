@@ -16,4 +16,6 @@ public interface AuctionTransactionRepository extends JpaRepository<AuctionTrans
     List<AuctionTransaction> findTop10ByTransactionStateNot(String transactionState, Sort createdAt);
 
     List<AuctionTransaction> findAllBySellerOrderByCreatedAtDesc(User idUser);
+  
+    List<AuctionTransaction> findAllByBuyerOrderByCreatedAtDesc(User idUser);
 }

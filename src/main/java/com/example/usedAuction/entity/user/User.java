@@ -1,5 +1,6 @@
 package com.example.usedAuction.entity.user;
 
+import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import lombok.Data;
@@ -60,4 +61,6 @@ public class User {
     @OneToMany(mappedBy = "buyer", cascade = CascadeType.REMOVE)
     private List<AuctionTransaction> auctionTransactionBuyList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "bidderId", cascade = CascadeType.REMOVE)
+    private List<AuctionBid> auctionBidList = new ArrayList<>();
 }

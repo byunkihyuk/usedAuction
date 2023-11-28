@@ -1,14 +1,8 @@
 package com.example.usedAuction.controller;
 
-import com.example.usedAuction.dto.General.GeneralTransactionDto;
+import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
-import com.example.usedAuction.entity.auction.AuctionTransaction;
-import com.example.usedAuction.entity.general.GeneralTransaction;
-import com.example.usedAuction.entity.general.GeneralTransactionImage;
-import com.example.usedAuction.repository.auction.AuctionTransactionRepository;
-import com.example.usedAuction.repository.general.GeneralTransactionRepository;
-import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.service.auction.AuctionTransactionService;
 import com.example.usedAuction.service.general.GeneralTransactionService;
 import lombok.RequiredArgsConstructor;
