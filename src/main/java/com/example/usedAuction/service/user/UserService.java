@@ -205,6 +205,21 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
+    public ResponseEntity<Object> getUserAuctionTransactionSellList(Integer userId) {
+        ResponseResult<Object> result = new ResponseResult<>();
+        HttpStatus status = HttpStatus.OK;
+
+        User idUser = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        List<AuctionTransactionDto> generalTransactionDtoList = auctionTransactionRepository.findAllBySellerOrderByCreatedAtDesc(idUser)
+                .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+        result.setData(generalTransactionDtoList);
+        result.setStatus("success");
+        return ResponseEntity.status(status).body(result);
+    }
+
+
     public ResponseEntity<Object> getUserAuctionTransactionBuyList(Integer userId) {
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.OK;
