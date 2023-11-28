@@ -16,6 +16,7 @@ public enum ErrorEnum {
     GENERAL_TRANSACTION_POST_ERROR(HttpStatus.BAD_REQUEST,"일반 거래글 등록 에러"),
     //경매 거래 글
     NOT_FOUND_AUCTION_TRANSACTION(HttpStatus.BAD_REQUEST,"없는 경매 거래 글 입니다."),
+    FAIL_BID(HttpStatus.BAD_REQUEST,"입찰에 실패했습니다."),
     // 거래 글 공통
     IMAGE_UPDATE_ERROR(HttpStatus.BAD_REQUEST," 이미지 수정 에러"),
     IMAGE_MAX_COUNT(HttpStatus.BAD_REQUEST,"이미지는 10개 이하로 업로드 가능합니다."),

@@ -1,15 +1,7 @@
 package com.example.usedAuction.dto.auction;
 
-import com.example.usedAuction.dto.General.GeneralTransactionImageDto;
-import com.example.usedAuction.entity.user.User;
 import lombok.Data;
-import org.hibernate.annotations.ColumnDefault;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.domain.PageRequest;
 
-import javax.persistence.Column;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.validation.constraints.NotBlank;
 import java.sql.Timestamp;
 import java.util.List;

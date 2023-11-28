@@ -12,6 +12,7 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Entity
@@ -38,10 +39,12 @@ public class AuctionTransaction {
 
     private Integer price;
 
+    @Column(name = "transaction_mode")
     private String transactionMode;
 
     private String location;
 
+    @Column(name = "transaction_sate")
     private String transactionState;
 
     private String payment;
@@ -65,4 +68,8 @@ public class AuctionTransaction {
 
     @OneToMany(mappedBy = "auctionTransactionId", cascade = CascadeType.REMOVE)
     private List<AuctionTransactionImage> auctionTransactionImageList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "auctionTransactionId", cascade = CascadeType.REMOVE)
+    private List<AuctionBid> auctionBidList = new ArrayList<>();
+
 }

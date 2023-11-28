@@ -1,7 +1,6 @@
 package com.example.usedAuction.repository.general;
 
 
-import com.example.usedAuction.dto.General.GeneralTransactionDto;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.user.User;
 import org.springframework.data.domain.Sort;
