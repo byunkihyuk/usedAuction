@@ -1,7 +1,9 @@
 package com.example.usedAuction.controller.auction;
 
+import com.example.usedAuction.dto.auction.AuctionTransactionBidFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.entity.TransactionImage;
+import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.service.auction.AuctionTransactionService;
 import lombok.RequiredArgsConstructor;
@@ -55,5 +57,9 @@ public class AuctionTransactionController {
         return auctionTransactionService.deleteAuctionTransaction(auctionTransactionId);
     }
 
+    @PostMapping(value = "/auction/{auctionTransactionId}/bid")
+    public ResponseEntity<Object> auctionBid(@PathVariable Integer auctionTransactionId,@RequestBody AuctionTransactionBidFormDto auctionTransactionBidFormDto){
+        return auctionTransactionService.auctionTransactionBid(auctionTransactionBidFormDto,auctionTransactionId);
+    }
 
 }
