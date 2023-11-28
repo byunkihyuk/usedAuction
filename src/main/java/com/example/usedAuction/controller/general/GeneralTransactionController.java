@@ -1,6 +1,6 @@
 package com.example.usedAuction.controller.general;
 
-import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
+import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
 import com.example.usedAuction.service.general.GeneralTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;

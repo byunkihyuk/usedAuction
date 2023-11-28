@@ -1,13 +1,12 @@
 package com.example.usedAuction.dto;
 
-import com.example.usedAuction.dto.General.GeneralTransactionImageDto;
-import com.example.usedAuction.dto.General.GeneralTransactionDto;
-import com.example.usedAuction.dto.General.GeneralTransactionFormDto;
-import com.example.usedAuction.dto.auction.AuctionTransactionDto;
-import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
-import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
+import com.example.usedAuction.dto.auction.*;
+import com.example.usedAuction.dto.general.GeneralTransactionImageDto;
+import com.example.usedAuction.dto.general.GeneralTransactionDto;
+import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
+import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.entity.general.GeneralTransaction;
@@ -50,4 +49,9 @@ public interface DataMapper {
     AuctionTransactionDto auctionTransactionToDto(AuctionTransaction auctionTransaction);
 
     UserDto UserEntityToDto(User user);
+
+
+    @Mapping(source = "bidderId.userId",target = "bidderId")
+    @Mapping(source = "auctionTransactionId.auctionTransactionId",target = "auctionTransactionId")
+    AuctionBidDto auctionBidEntityToDto(AuctionBid auctionBid);
 }
