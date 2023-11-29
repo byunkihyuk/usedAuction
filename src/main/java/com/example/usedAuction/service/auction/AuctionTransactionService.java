@@ -331,7 +331,7 @@ public class AuctionTransactionService {
     }
 
     @Transactional
-    public ResponseEntity<Object> auctionTransactionBid(AuctionTransactionBidFormDto auctionTransactionBidFormDto, Integer auctionTransactionId) {
+    public ResponseEntity<Object> postAuctionTransactionBid(AuctionTransactionBidFormDto auctionTransactionBidFormDto, Integer auctionTransactionId) {
         String username = SecurityUtil.getCurrentUsername().orElse("");
 
         User loginUser = userRepository.findByUsername(username)
@@ -360,6 +360,24 @@ public class AuctionTransactionService {
             getAuctionBid.setPrice(auctionTransactionBidFormDto.getPrice());
             result.setData(DataMapper.instance.auctionBidEntityToDto(getAuctionBid));
         }
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    public ResponseEntity<Object> getAuctionTransactionBid(Integer auctionTransactionId) {
+        String username = SecurityUtil.getCurrentUsername().orElse("");
+
+        User loginUser = userRepository.findByUsername(username)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        AuctionBid getAuctionBid = auctionBidRepository.findByAuctionTransactionIdAndBidderId(auctionTransaction,loginUser);
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.auctionBidEntityToDto(getAuctionBid));
+
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
