@@ -50,7 +50,7 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.POST, "/api/sign-in").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/general/**").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/general").permitAll()
-                        .antMatchers(HttpMethod.GET, "/api/auction/**").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/auction/*").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/main").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*/general-sell-history").permitAll()
