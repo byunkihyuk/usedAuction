@@ -59,7 +59,12 @@ public class AuctionTransactionController {
 
     @PostMapping(value = "/auction/{auctionTransactionId}/bid")
     public ResponseEntity<Object> auctionBid(@PathVariable Integer auctionTransactionId,@RequestBody AuctionTransactionBidFormDto auctionTransactionBidFormDto){
-        return auctionTransactionService.auctionTransactionBid(auctionTransactionBidFormDto,auctionTransactionId);
+        return auctionTransactionService.postAuctionTransactionBid(auctionTransactionBidFormDto,auctionTransactionId);
+    }
+
+    @GetMapping(value = "/auction/{auctionTransactionId}/bid")
+    public ResponseEntity<Object> getAuctionBid(@PathVariable Integer auctionTransactionId){
+        return auctionTransactionService.getAuctionTransactionBid(auctionTransactionId);
     }
 
 }
