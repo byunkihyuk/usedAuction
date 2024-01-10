@@ -1,6 +1,9 @@
 package com.example.usedAuction.dto;
 
 import com.example.usedAuction.dto.auction.*;
+import com.example.usedAuction.dto.chat.ChattingMessageForm;
+import com.example.usedAuction.dto.chat.ChattingMessageDto;
+import com.example.usedAuction.dto.chat.ChattingRoomDto;
 import com.example.usedAuction.dto.general.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
@@ -9,6 +12,8 @@ import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
+import com.example.usedAuction.entity.chat.ChattingMessage;
+import com.example.usedAuction.entity.chat.ChattingRoom;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.user.User;
@@ -54,4 +59,31 @@ public interface DataMapper {
     @Mapping(source = "bidderId.userId",target = "bidderId")
     @Mapping(source = "auctionTransactionId.auctionTransactionId",target = "auctionTransactionId")
     AuctionBidDto auctionBidEntityToDto(AuctionBid auctionBid);
+
+    @Mapping(source = "sender.userId",target = "sender")
+    @Mapping(source = "receiver.userId",target = "receiver")
+    ChattingRoomDto chattingRoomEntityToDto(ChattingRoom chattingRoom);
+
+//    @Mapping(source = "sender", target = "sender.userId")
+//    @Mapping(source = "receiver", target = "receiver.userId")
+//    @Mapping(source = "roomId", target = "roomId.roomId")
+//    ChattingMessage chattingFormToEntity(ChattingMessageForm msg);
+//
+//    @Mapping(source = "sender.userId", target = "sender")
+//    @Mapping(source = "receiver.userId", target = "receiver")
+//    @Mapping(source = "roomId.roomId", target = "roomId")
+//    ChattingMessageForm chattingEntityToForm(ChattingMessage resultMessage);
+
+    @Mapping(source = "sender", target = "sender.userId")
+    @Mapping(source = "receiver", target = "receiver.userId")
+    ChattingRoom chattingRoomDtoToEntity(ChattingRoomDto createRoomDto);
+
+    @Mapping(source = "roomId.roomId", target = "roomId")
+    @Mapping(source = "sender.userId", target = "sender")
+    //@Mapping(source = "receiver.userId", target = "receiver")
+    ChattingMessageDto chattingMessageEntityToDto(ChattingMessage message);
+
+    @Mapping(source = "roomId", target = "roomId.roomId")
+    @Mapping(source = "sender", target = "sender.userId")
+    ChattingMessage chattingMessageDtoToEntity(ChattingMessageDto msg);
 }
