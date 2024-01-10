@@ -22,7 +22,9 @@ public enum ErrorEnum {
     IMAGE_MAX_COUNT(HttpStatus.BAD_REQUEST,"이미지는 10개 이하로 업로드 가능합니다."),
     IMAGE_DELETE_ERROR(HttpStatus.BAD_REQUEST,"이미지 삭제 에러"),
     IMAGE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST,"이미지 업로드 에러"),
-    NOT_FOUND_USER(HttpStatus.BAD_REQUEST,"없는 사용자 입니다."),;
+    NOT_FOUND_USER(HttpStatus.BAD_REQUEST,"없는 사용자 입니다."),
+    NOT_FOUND_CHATROOM(HttpStatus.BAD_REQUEST,"없는 채팅방 입니다." ), 
+    CHAT_MESSAGE_SEND_ERROR(HttpStatus.BAD_REQUEST,"채팅 메시지 저장 에러" );
 
     private final HttpStatus httpStatus;
     private final String message;
