@@ -2,6 +2,7 @@ package com.example.usedAuction.entity.user;
 
 import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
+import com.example.usedAuction.entity.chat.ChattingMessage;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
@@ -63,4 +64,10 @@ public class User {
 
     @OneToMany(mappedBy = "bidderId", cascade = CascadeType.REMOVE)
     private List<AuctionBid> auctionBidList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "sender", cascade = CascadeType.REMOVE)
+    private List<ChattingMessage> chatSenderList = new ArrayList<>();
+
+//    @OneToMany(mappedBy = "receiver", cascade = CascadeType.REMOVE)
+//    private List<ChattingMessage> chatReceiverList = new ArrayList<>();
 }
