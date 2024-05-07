@@ -22,6 +22,7 @@ public class UserDto {
     private String phone;
     private String address;
     private String detailAddress;
+    private Integer money;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
