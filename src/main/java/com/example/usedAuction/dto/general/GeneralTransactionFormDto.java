@@ -1,5 +1,8 @@
 package com.example.usedAuction.dto.general;
 
+import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,9 +18,8 @@ public class GeneralTransactionFormDto {
     private String title;
     private String content;
     private Integer price;
-    @NotBlank(message = "거래방식을 입력하세요.")
-    private String transactionMode;
+    private TransactionModeEnum transactionMode;
     private String location;
-    private String transactionState = "판매중";
-    private String payment;
+    private TransactionStateEnum transactionState = TransactionStateEnum.SALE;
+    private TransactionPaymentEnum payment;
 }
