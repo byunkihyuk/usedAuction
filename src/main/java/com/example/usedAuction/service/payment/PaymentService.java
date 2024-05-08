@@ -97,4 +97,201 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(resultDto);
     }
 
+//    @Transactional
+//    public ResponseEntity<Object> withdrawalMoney(PayInfoDto payInfoDto) {
+//        // 현재 로그인한 유저와 userId가 맞는지 확인
+//        User loingUser = userRepository.findByUsernamePessimisticLock(SecurityUtil.getCurrentUsername().orElse(""))
+//                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+//
+//        if(!Objects.equals(loingUser.getUserId(), payInfoDto.getSeller())){
+//            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+//        }
+//
+//        // 출금 금액이 잔금보다 많은지 확인
+//        if(loingUser.getMoney()+payInfoDto.getTransactionMoney() < 0){
+//            throw new ApiException(ErrorEnum.INSUFFICIENT_MONEY);
+//        }
+//
+//        // 출금
+//        payInfoDto.setSeller(loingUser.getUserId());
+//
+//        try{
+//            // 사용자 금액 변경
+//            loingUser.setMoney(loingUser.getMoney()+payInfoDto.getTransactionMoney());
+//            payInfoDto.setTransactionRequestState(TransactionRequestStateEnum.APPROVE);
+//        }catch (Exception e){
+//            throw new ApiException(ErrorEnum.WITHDRAWAL_FAIL);
+//        }
+//
+//        PayInfo savePay = new PayInfo();
+//        savePay.setSeller(loingUser);
+//        savePay.setTransactionMoney(payInfoDto.getTransactionMoney());
+//        savePay.setTransactionRequestType(payInfoDto.getTransactionRequestType());
+//        savePay.setTransactionRequestState(payInfoDto.getTransactionRequestState());
+//        savePay.setUsedTransactionType(payInfoDto.getUsedTransactionType());
+//
+//        PayInfo payInfo = payInfoRepository.save(savePay);
+//
+//        ResponseResult<Object> result = new ResponseResult<>();
+//        result.setStatus("success");
+//        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+//
+//        return ResponseEntity.status(HttpStatus.OK).body(result);
+//    }
+
+    @Transactional
+    public ResponseEntity<Object> generalPayment(PayInfoDto payInfoDto) {
+        // 글이 존재하는지
+        GeneralTransaction generalTransaction = generalTransactionRepository.findById(payInfoDto.getGeneralTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_GENERAL_TRANSACTION));
+        // seller와 buyer가 존재하는지
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+        User loginUser = userRepository.findByUsernamePessimisticLock(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        // buyer의 잔금이 결제금액보다 많은지 확인
+        if(loginUser.getMoney() < payInfoDto.getTransactionMoney()){
+            throw new ApiException(ErrorEnum.INSUFFICIENT_MONEY);
+        }
+
+        PayInfo savePay = new PayInfo();
+        savePay.setSeller(seller);
+        savePay.setBuyer(loginUser);
+        savePay.setTransactionMoney(payInfoDto.getTransactionMoney());
+        savePay.setTransactionRequestType(payInfoDto.getTransactionRequestType());
+        savePay.setTransactionRequestState(payInfoDto.getTransactionRequestState());
+        savePay.setUsedTransactionType(payInfoDto.getUsedTransactionType());
+        savePay.setGeneralTransactionId(generalTransaction);
+        savePay.setTransactionRequestState(TransactionRequestStateEnum.WAIT);
+
+        try {
+            // 머니 결제 요청
+            payInfoRepository.save(savePay);
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_PAYMENT_FAIL);
+        }
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(savePay));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> generalPaymentProgress(PayInfoDto payInfoDto) {
+        // 글이 존재하는지
+        GeneralTransaction generalTransaction = generalTransactionRepository.findById(payInfoDto.getGeneralTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_GENERAL_TRANSACTION));
+        // seller와 buyer 존재하는지
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        // 현재 로그인한 사용자가 seller인지
+        if(!(Objects.equals(loginUser.getUserId(), seller.getUserId()))){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        // 결제 정보가 있는지
+        PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
+        
+        try {
+            // 거래 글 예약중으로 변경
+            generalTransaction.setTransactionState(TransactionStateEnum.RESERVATION);
+            payInfo.setTransactionRequestState(TransactionRequestStateEnum.PROGRESS);
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_APPROVE_FAIL);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> generalPaymentApprove(PayInfoDto payInfoDto) {
+
+        // 글이 존재하는지
+        GeneralTransaction generalTransaction = generalTransactionRepository.findById(payInfoDto.getGeneralTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_GENERAL_TRANSACTION));
+
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+        User loginUser = userRepository.findByUsernamePessimisticLock(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        // 현재 로그인한 사용자가 seller buyer 둘 중 하나라도 일치하지 않으면 에러발생
+        if(!(Objects.equals(loginUser.getUserId(), seller.getUserId()))){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        // 결제 정보가 있기 때문에 ID로 DB에서 조회
+        PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
+        // buyer의 잔금이 결제금액보다 많은지 확인
+        if(loginUser.getMoney() < payInfoDto.getTransactionMoney()){
+            throw new ApiException(ErrorEnum.INSUFFICIENT_MONEY);
+        }
+        try {
+            // 판매자 잔액 수정
+            seller.setMoney(seller.getMoney() + payInfo.getTransactionMoney());
+            // 구매자 잔액 수정
+            loginUser.setMoney(loginUser.getMoney() - payInfo.getTransactionMoney());
+            payInfo.setTransactionRequestState(TransactionRequestStateEnum.APPROVE);
+            generalTransaction.setTransactionState(TransactionStateEnum.COMPLETE);
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_APPROVE_FAIL);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> generalPaymentCancel(PayInfoDto payInfoDto) {
+        // 결제 정보가 있기 때문에 ID로 DB에서 조회
+        PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
+
+        if(payInfo.getTransactionRequestState().equals(TransactionRequestStateEnum.APPROVE)){
+            throw new ApiException(ErrorEnum.PAYMENT_COMPLETED_CANCEL_FAIL);
+        }
+
+        // 글이 존재하는지
+        GeneralTransaction generalTransaction = generalTransactionRepository.findById(payInfoDto.getGeneralTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_GENERAL_TRANSACTION));
+        // seller와 buyer가 존재하는지
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+        User buyer = userRepository.findByUserIdPessimisticLock(payInfoDto.getBuyer())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!(Objects.equals(loginUser.getUserId(), seller.getUserId()) || Objects.equals(loginUser.getUserId(), buyer.getUserId()))){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        try {
+            payInfo.setTransactionRequestState(TransactionRequestStateEnum.CANCEL);
+            generalTransaction.setTransactionState(TransactionStateEnum.SALE);
+        }catch (Exception e ){
+            throw new ApiException(ErrorEnum.PAYMENT_CANCEL_FAIL);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
 }
