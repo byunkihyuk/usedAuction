@@ -26,6 +26,33 @@ public class PayController {
         return paymentService.chargingMoney(payInfoDto);
     }
 
+//    // 출금
+//    @PostMapping(value = "/withdrawal")
+//    public ResponseEntity<Object> withdrawalMoney(@RequestBody PayInfoDto payInfoDto){
+//        return paymentService.withdrawalMoney(payInfoDto) ;
+//    }
+
+    // 일반 거래글 결제 요청
+    @PostMapping(value = "/general/payment")
+    public ResponseEntity<Object> generalPaymentRequest(@RequestBody PayInfoDto payInfoDto){
+        return paymentService.generalPayment(payInfoDto);
+    }
+
+    @PostMapping(value = "/general/progress")
+    public ResponseEntity<Object> generalPaymentProgress(@RequestBody PayInfoDto payInfoDto){
+        return paymentService.generalPaymentProgress(payInfoDto);
+    }
+
+    @PutMapping(value = "/general/approve")
+    public ResponseEntity<Object> generalPaymentApprove(@RequestBody PayInfoDto payInfoDto){
+        return paymentService.generalPaymentApprove(payInfoDto);
+    }
+
+    @PutMapping(value = "/general/cancel")
+    public ResponseEntity<Object> generalPaymentCancel(@RequestBody PayInfoDto payInfoDto){
+        return paymentService.generalPaymentCancel(payInfoDto);
+    }
+
 
 }
 
