@@ -1,9 +1,11 @@
 package com.example.usedAuction.entity.auction;
 
-import com.example.usedAuction.entity.general.GeneralTransactionImage;
+import com.example.usedAuction.entity.payment.PayInfo;
+import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import lombok.Data;
-import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -12,7 +14,6 @@ import javax.persistence.*;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Data
 @Entity
@@ -40,26 +41,29 @@ public class AuctionTransaction {
     private Integer price;
 
     @Column(name = "transaction_mode")
-    private String transactionMode;
+    @Enumerated(EnumType.STRING)
+    private TransactionModeEnum transactionMode;
 
     private String location;
 
     @Column(name = "transaction_sate")
-    private String transactionState;
+    @Enumerated(EnumType.STRING)
+    private TransactionStateEnum transactionState;
 
-    private String payment;
+    @Enumerated(EnumType.STRING)
+    private TransactionPaymentEnum payment;
 
     @Column(columnDefinition = "integer default 0")
     private Integer viewCount=0;
 
-    @Column(name = "started_at",nullable = false)
+    @Column(name = "started_at")
     private Timestamp startedAt;
 
-    @Column(name = "finished_at",nullable = false)
+    @Column(name = "finished_at")
     private Timestamp finishedAt;
 
     @CreatedDate
-    @Column(name = "created_at",nullable = false)
+    @Column(name = "created_at")
     private Timestamp createdAt;
 
     @LastModifiedDate
@@ -72,4 +76,6 @@ public class AuctionTransaction {
     @OneToMany(mappedBy = "auctionTransactionId", cascade = CascadeType.REMOVE)
     private List<AuctionBid> auctionBidList = new ArrayList<>();
 
+    @OneToMany(mappedBy = "auctionTransactionId", cascade = CascadeType.REFRESH)
+    private List<PayInfo> payInfoList = new ArrayList<>();
 }
