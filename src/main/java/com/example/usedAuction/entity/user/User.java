@@ -4,7 +4,9 @@ import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.chat.ChattingMessage;
 import com.example.usedAuction.entity.general.GeneralTransaction;
+import com.example.usedAuction.entity.payment.PayInfo;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -42,6 +44,9 @@ public class User {
     @Column(nullable = true)
     private String detailAddress;
 
+    @ColumnDefault(value = "0")
+    private Integer money;
+
     @CreatedDate
     @Column(name ="created_at" ,nullable = false)
     private Timestamp createdAt;
@@ -62,12 +67,15 @@ public class User {
     @OneToMany(mappedBy = "buyer", cascade = CascadeType.REMOVE)
     private List<AuctionTransaction> auctionTransactionBuyList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "bidderId", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "bidder", cascade = CascadeType.REMOVE)
     private List<AuctionBid> auctionBidList = new ArrayList<>();
 
     @OneToMany(mappedBy = "sender", cascade = CascadeType.REMOVE)
     private List<ChattingMessage> chatSenderList = new ArrayList<>();
 
-//    @OneToMany(mappedBy = "receiver", cascade = CascadeType.REMOVE)
-//    private List<ChattingMessage> chatReceiverList = new ArrayList<>();
+    @OneToMany(mappedBy = "seller")
+    private List<PayInfo> payInfoSenderList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "buyer")
+    private List<PayInfo> payInfoReceiverList = new ArrayList<>();
 }
