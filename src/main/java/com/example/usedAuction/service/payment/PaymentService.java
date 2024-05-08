@@ -3,6 +3,14 @@ package com.example.usedAuction.service.payment;
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.payment.PayInfoDto;
 import com.example.usedAuction.dto.result.ResponseResult;
+import com.example.usedAuction.entity.auction.AuctionBid;
+import com.example.usedAuction.entity.transactionenum.AuctionBidStateEnum;
+import com.example.usedAuction.entity.auction.AuctionTransaction;
+import com.example.usedAuction.entity.general.GeneralTransaction;
+import com.example.usedAuction.entity.payment.PayInfo;
+import com.example.usedAuction.entity.transactionenum.TransactionRequestStateEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionRequestTypeEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -49,5 +57,44 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @Transactional
+    public ResponseEntity<Object> chargingMoney(PayInfoDto payInfoDto) {
+
+        // 현재 로그인한 유저와 userId가 맞는지 확인
+        User loingUser = userRepository.findByUsernamePessimisticLock(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!Objects.equals(loingUser.getUserId(), payInfoDto.getSeller())){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+        // 충전 금액 저장
+        //DataMapper.instance.payInfoDtoToEntity(payInfoDto);
+        /// DataMapper 사용시 general,auction Transaction 생성해서 오류 발생
+        PayInfo savePay = new PayInfo();
+        savePay.setSeller(loingUser);
+        savePay.setTransactionMoney(payInfoDto.getTransactionMoney());
+        savePay.setTransactionRequestType(payInfoDto.getTransactionRequestType());
+        savePay.setTransactionRequestState(payInfoDto.getTransactionRequestState());
+        savePay.setUsedTransactionType(payInfoDto.getUsedTransactionType());
+
+        PayInfo payInfoEntity = payInfoRepository.save(savePay);
+
+        // 사용자 금액 변경
+        try {
+            loingUser.setMoney(loingUser.getMoney() + payInfoEntity.getTransactionMoney());
+            payInfoEntity.setTransactionRequestState(TransactionRequestStateEnum.APPROVE);
+        }catch (Exception e){
+            e.printStackTrace();
+            throw new ApiException(ErrorEnum.CHARGING_FAIL);
+        }
+
+        PayInfoDto resultDto = DataMapper.instance.payInfoEntityToDto(payInfoEntity);
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(resultDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(resultDto);
+    }
 
 }
