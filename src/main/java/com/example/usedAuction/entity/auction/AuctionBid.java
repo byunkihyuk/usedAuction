@@ -1,5 +1,6 @@
 package com.example.usedAuction.entity.auction;
 
+import com.example.usedAuction.entity.transactionenum.AuctionBidStateEnum;
 import com.example.usedAuction.entity.user.User;
 import lombok.Data;
 import org.springframework.data.annotation.CreatedDate;
@@ -8,7 +9,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import javax.persistence.*;
 import java.sql.Timestamp;
-import java.util.List;
 
 @Entity
 @Data
@@ -23,11 +23,16 @@ public class AuctionBid {
     private Integer price;
 
     @ManyToOne
-    @JoinColumn(name = "bidder_id")
-    private User bidderId;
+    @JoinColumn(name = "bidder")
+    private User bidder;
+
+    @Column(name = "auction_bid_state")
+    @Enumerated(EnumType.STRING)
+    private AuctionBidStateEnum auctionBidState;
 
     @ManyToOne
     @JoinColumn(name = "auction_transaction_id")
+    @Enumerated(EnumType.STRING)
     private AuctionTransaction auctionTransactionId;
 
     @CreatedDate
