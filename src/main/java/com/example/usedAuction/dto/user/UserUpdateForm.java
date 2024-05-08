@@ -19,4 +19,5 @@ public class UserUpdateForm {
     private String phone;
     private String address;
     private String detailAddress;
+    private Integer money;
 }
