@@ -7,6 +7,7 @@ import com.example.usedAuction.dto.chat.ChattingRoomDto;
 import com.example.usedAuction.dto.general.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
+import com.example.usedAuction.dto.payment.PayInfoDto;
 import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.entity.auction.AuctionBid;
@@ -16,6 +17,7 @@ import com.example.usedAuction.entity.chat.ChattingMessage;
 import com.example.usedAuction.entity.chat.ChattingRoom;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
+import com.example.usedAuction.entity.payment.PayInfo;
 import com.example.usedAuction.entity.user.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -56,9 +58,13 @@ public interface DataMapper {
     UserDto UserEntityToDto(User user);
 
 
-    @Mapping(source = "bidderId.userId",target = "bidderId")
+    @Mapping(source = "bidder.userId",target = "bidder")
     @Mapping(source = "auctionTransactionId.auctionTransactionId",target = "auctionTransactionId")
     AuctionBidDto auctionBidEntityToDto(AuctionBid auctionBid);
+
+    @Mapping(source = "bidder",target = "bidder.userId")
+    @Mapping(source = "auctionTransactionId",target = "auctionTransactionId.auctionTransactionId")
+    AuctionBid auctionBidDtoToEntity(AuctionBidDto auctionBidDto);
 
     @Mapping(source = "sender.userId",target = "sender")
     @Mapping(source = "receiver.userId",target = "receiver")
@@ -86,4 +92,17 @@ public interface DataMapper {
     @Mapping(source = "roomId", target = "roomId.roomId")
     @Mapping(source = "sender", target = "sender.userId")
     ChattingMessage chattingMessageDtoToEntity(ChattingMessageDto msg);
+
+    @Mapping(source = "seller", target = "seller.userId")
+    @Mapping(source = "buyer", target = "buyer.userId")
+    @Mapping(source = "generalTransactionId", target = "generalTransactionId.generalTransactionId")
+    @Mapping(source = "auctionTransactionId", target = "auctionTransactionId.auctionTransactionId")
+    PayInfo payInfoDtoToEntity(PayInfoDto payInfoDto);
+
+    @Mapping(source = "seller.userId", target = "seller")
+    @Mapping(source = "buyer.userId", target = "buyer")
+    @Mapping(source = "generalTransactionId.generalTransactionId", target = "generalTransactionId")
+    @Mapping(source = "auctionTransactionId.auctionTransactionId", target = "auctionTransactionId")
+    PayInfoDto payInfoEntityToDto(PayInfo payInfoEntity);
+
 }
