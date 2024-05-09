@@ -148,7 +148,8 @@ public class ChattingService {
         chattingMessage.setSender(sender);
         
         try{
-            chattingMessageRepository.save(chattingMessage);
+             ChattingMessage a = chattingMessageRepository.save(chattingMessage);
+            System.out.println(a.getCreatedAt());
             // redis에도 채팅 내용 저장
             redisSaveMessage(msg);
 
@@ -189,14 +190,14 @@ public class ChattingService {
         enterRoom(String.valueOf(roomId));
         
         // redis에 채팅내역 검색
-        List<ChattingMessageDto> messageDtoList = redisGetMessageList(String.valueOf(chattingRoomDto.getRoomId()),start,start+99);
+        List<ChattingMessageDto> messageDtoList = new ArrayList<>();// redisGetMessageList(String.valueOf(chattingRoomDto.getRoomId()),start,start+99);
 
         // redis에 채팅 내역 없으면 DB 검색
         // DB 페이징 추가
         if(messageDtoList!=null || messageDtoList.isEmpty()){
             Sort sort = Sort.by("createdAt").descending();
             Pageable pageable = PageRequest.of(start/100,100,sort);
-            messageDtoList = chattingMessageRepository.findAllByRoomId(chattingRoomDto.getRoomId(),pageable)
+            messageDtoList = chattingMessageRepository.findAllByRoomId(DataMapper.instance.chattingRoomDtoToEntity(chattingRoomDto),pageable)
                     .stream().map(DataMapper.instance::chattingMessageEntityToDto)
                     .collect(Collectors.toList());
         }
