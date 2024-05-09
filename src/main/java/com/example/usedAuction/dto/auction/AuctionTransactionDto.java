@@ -1,8 +1,12 @@
 package com.example.usedAuction.dto.auction;
 
+import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -17,10 +21,10 @@ public class AuctionTransactionDto {
     private String title;
     private String content;
     private Integer price;
-    @NotBlank(message = "거래방식을 입력하세요.")
-    private String transactionMode;
+    @NotNull(message = "거래방식을 선택하세요.")
+    private TransactionModeEnum transactionMode;
     private String location;
-    private String transactionState;
+    private TransactionStateEnum transactionState;
     private String payment;
     private Integer viewCount=0;
     @NotBlank(message = "경매 시작일을 지정하세요")

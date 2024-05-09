@@ -53,6 +53,23 @@ public class PayController {
         return paymentService.generalPaymentCancel(payInfoDto);
     }
 
+    // 경매 거래 글 입찰 요청
+    @PostMapping(value = "/auction/auctionBid/{auctionBidId}")
+    public ResponseEntity<Object> auctionPaymentRequest(@RequestBody PayInfoDto payInfoDto, @PathVariable Integer auctionBidId){
+        return paymentService.auctionPaymentRequest(payInfoDto,auctionBidId);
+    }
+
+    // 경매 거래 글 승인
+    @PutMapping(value = "/auction/auctionBid/{auctionBidId}/approve")
+    public ResponseEntity<Object> auctionPaymentApprove(@RequestBody PayInfoDto payInfoDto, @PathVariable Integer auctionBidId){
+        return paymentService.auctionPaymentApprove(payInfoDto,auctionBidId);
+    }
+
+    // 경매 거래 글 취소
+    @PutMapping(value = "/auction/auctionBid/{auctionBidId}/cancel")
+    public ResponseEntity<Object> auctionPaymentCancel(@RequestBody PayInfoDto payInfoDto, @PathVariable Integer auctionBidId){
+        return paymentService.auctionPaymentCancel(payInfoDto,auctionBidId);
+    }
 
 }
 

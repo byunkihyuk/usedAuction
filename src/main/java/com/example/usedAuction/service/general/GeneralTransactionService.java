@@ -8,6 +8,9 @@ import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
+import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -46,7 +49,7 @@ public class GeneralTransactionService {
     public ResponseEntity<Object> postGeneralTransaction(GeneralTransactionFormDto generalTransactionFormDto, List<MultipartFile> imageFiles) {
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.CREATED;
-        if(imageFiles.size()>10){ // 이미지 10개 이상일 경우 실패
+        if(imageFiles!=null && imageFiles.size()>10){ // 이미지 10개 이상일 경우 실패
             Map<String,Object> map = new HashMap<>();
             Map<String,Object> data = new HashMap<>();
             data.put("message", ErrorEnum.IMAGE_MAX_COUNT);
@@ -66,48 +69,43 @@ public class GeneralTransactionService {
             try{
                 getGeneralTransaction = generalTransactionRepository.save(generalTransaction);
             }catch (Exception e){
+                e.printStackTrace();
                 throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_POST_ERROR);
             }
             // 이미지 저장(s3 업로드) 후 결과 반환
-            try{
-                List<GeneralTransactionImage> imageList = new ArrayList<>();
-                List<GeneralTransactionImage> successGeneralImageDtoList=null;
+            List<GeneralTransactionImageDto> resultImageList = null;
+            if(imageFiles!=null) {
+                try {
+                    List<GeneralTransactionImage> imageList = new ArrayList<>();
+                    List<GeneralTransactionImage> successGeneralImageDtoList = null;
+                    for (int i = 1; i <= imageFiles.size(); i++) {
+                        GeneralTransactionImageDto generalTransactionImageDto = new GeneralTransactionImageDto();
+                        MultipartFile image = imageFiles.get(i - 1);
+                        generalTransactionImageDto.setImageSeq(i);
+                        generalTransactionImageDto.setOriginName(image.getOriginalFilename());
 
-                for(int i=1;i<=imageFiles.size();i++){
-                    GeneralTransactionImageDto generalTransactionImageDto = new GeneralTransactionImageDto();
-                    MultipartFile image = imageFiles.get(i-1);
-                    generalTransactionImageDto.setImageSeq(i);
-                    generalTransactionImageDto.setOriginName(image.getOriginalFilename());
+                        String imageFilename = ServiceUtil.makeUploadFileName(generalTransactionImageDto.getOriginName());
+                        generalTransactionImageDto.setImageName(imageFilename);
+                        generalTransactionImageDto.setUploadUrl(s3UploadService.uploadImage(image, imageFilename));
 
-                    String imageFilename = ServiceUtil.makeUploadFileName(generalTransactionImageDto.getOriginName());
-                    generalTransactionImageDto.setImageName(imageFilename);
-                    generalTransactionImageDto.setUploadUrl(s3UploadService.uploadImage(image,imageFilename));
+                        GeneralTransactionImage generalTransactionImage = DataMapper.instance.generalImageDtoToEntity(generalTransactionImageDto);
+                        generalTransactionImage.setGeneralTransactionId(getGeneralTransaction);
+                        imageList.add(generalTransactionImage);
+                    }
 
-                    GeneralTransactionImage generalTransactionImage = DataMapper.instance.generalImageDtoToEntity(generalTransactionImageDto);
-                    generalTransactionImage.setGeneralTransactionId(getGeneralTransaction);
-                    imageList.add(generalTransactionImage);
-
+                    successGeneralImageDtoList = generalTransactionImageRepository.saveAll(imageList);
+                    resultImageList = successGeneralImageDtoList.stream()
+                            .map(DataMapper.instance::generalImageEntityToDto)
+                            .collect(Collectors.toList());
+                    getGeneralTransaction.setThumbnail(resultImageList.get(0).getUploadUrl());
+                } catch (Exception e) {
+                    throw new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
                 }
-
-
-                successGeneralImageDtoList =  generalTransactionImageRepository.saveAll(imageList);
-                List<GeneralTransactionImageDto> resultImageList =   successGeneralImageDtoList.stream()
-                        .map(DataMapper.instance::generalImageEntityToDto)
-                        .collect(Collectors.toList());
-
-
-                GeneralTransactionDto resultGeneralTransactionDtoDto = DataMapper.instance.generalTransactionToDto(getGeneralTransaction);
-                resultGeneralTransactionDtoDto.setImages(resultImageList);
-                Map<String,Object> map = new HashMap<>();
-                Map<Object,Object> data = new HashMap<>();
-                data.put(resultGeneralTransactionDtoDto.getGeneralTransactionId(), resultGeneralTransactionDtoDto);
-                map.put("data",data);
-                result.setStatus("success");
-                result.setData(map);
-
-            }catch (Exception e ){
-                throw  new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
             }
+            GeneralTransactionDto resultGeneralTransactionDtoDto = DataMapper.instance.generalTransactionToDto(getGeneralTransaction);
+            resultGeneralTransactionDtoDto.setImages(resultImageList);
+            result.setStatus("success");
+            result.setData(resultGeneralTransactionDtoDto);
         }
         return ResponseEntity.status(status).body(result);
     }
@@ -351,7 +349,7 @@ public class GeneralTransactionService {
         if(sortOption.equals("createdAt")){
             sort = Sort.by("createdAt").descending();
         }
-        return generalTransactionRepository.findTop10ByTransactionStateNot("판매완료",sort)
+        return generalTransactionRepository.findTop10ByTransactionStateNot(TransactionStateEnum.COMPLETE,sort)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
     }
 }

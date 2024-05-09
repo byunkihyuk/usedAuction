@@ -1,6 +1,7 @@
 package com.example.usedAuction.repository.auction;
 
 import com.example.usedAuction.entity.auction.AuctionTransaction;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,7 +14,7 @@ public interface AuctionTransactionRepository extends JpaRepository<AuctionTrans
 
      Optional<AuctionTransaction> findByAuctionTransactionId(Integer auctionTransactionId);
 
-    List<AuctionTransaction> findTop10ByTransactionStateNot(String transactionState, Sort createdAt);
+    List<AuctionTransaction> findTop10ByTransactionStateNot(TransactionStateEnum transactionState, Sort createdAt);
 
     List<AuctionTransaction> findAllBySellerOrderByCreatedAtDesc(User idUser);
   

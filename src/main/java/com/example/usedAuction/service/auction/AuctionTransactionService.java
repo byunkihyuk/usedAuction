@@ -1,15 +1,17 @@
 package com.example.usedAuction.service.auction;
 
+import com.amazonaws.internal.http.ErrorCodeParser;
 import com.example.usedAuction.dto.DataMapper;
-import com.example.usedAuction.dto.auction.AuctionTransactionBidFormDto;
-import com.example.usedAuction.dto.auction.AuctionTransactionDto;
-import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
-import com.example.usedAuction.dto.auction.AuctionTransactionImageDto;
+import com.example.usedAuction.dto.auction.*;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.entity.auction.AuctionBid;
+import com.example.usedAuction.entity.transactionenum.AuctionBidStateEnum;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
+import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -67,7 +69,7 @@ public class AuctionTransactionService {
             try{
                 getAuctionTransaction = auctionTransactionRepository.save(auctionTransaction);
             }catch (Exception e){
-                throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_POST_ERROR);
+                throw new ApiException(ErrorEnum.AUCTION_TRANSACTION_POST_ERROR);
             }
             // 이미지 저장(s3 업로드) 후 결과 반환
             List<AuctionTransactionImage> imageList = new ArrayList<>();
@@ -204,6 +206,8 @@ public class AuctionTransactionService {
         }
         return ResponseEntity.status(resultHttp).body(result);
     }
+
+    @Transactional
     private List<AuctionTransactionImageDto> updateTransactionImage(List<AuctionTransactionImage> auctionTransactionImages, List<MultipartFile> multipartFile, AuctionTransaction auctionTransaction) throws IOException {
         List<AuctionTransactionImage> deleteList = new ArrayList<>();
         List<AuctionTransactionImage> updateList = new ArrayList<>();
@@ -326,12 +330,90 @@ public class AuctionTransactionService {
         if(sortOption.equals("createdAt")){
             sort = Sort.by("createdAt").descending();
         }
-        return  auctionTransactionRepository.findTop10ByTransactionStateNot("판매완료",sort)
+
+        return  auctionTransactionRepository.findTop10ByTransactionStateNot(TransactionStateEnum.COMPLETE,sort)
                 .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
     }
 
     @Transactional
-    public ResponseEntity<Object> postAuctionTransactionBid(AuctionTransactionBidFormDto auctionTransactionBidFormDto, Integer auctionTransactionId) {
+    public ResponseEntity<Object> postAuctionTransactionBid(AuctionBidDto auctionBidDto) {
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!loginUser.getUserId().equals(auctionBidDto.getBidder())){
+            throw new ApiException(ErrorEnum.NOT_MATCH_USER);
+        }
+
+        // 경매 글이 존재하는지 확인
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionBidDto.getAuctionTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        AuctionBid getAuctionBid = auctionBidRepository.findByAuctionTransactionIdAndBidder(auctionTransaction,loginUser)
+                .orElse(null);
+
+        if(getAuctionBid!=null){
+            throw new ApiException(ErrorEnum.EXIST_BID);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        auctionBidDto.setAuctionBidState(AuctionBidStateEnum.BID);
+        AuctionBid auctionBid = DataMapper.instance.auctionBidDtoToEntity(auctionBidDto);
+
+        try{
+            auctionBidRepository.save(auctionBid);
+            result.setData(DataMapper.instance.auctionBidEntityToDto(auctionBid));
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.FAIL_BID);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> updateAuctionTransactionBid(AuctionBidDto auctionBidDto) {
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!loginUser.getUserId().equals(auctionBidDto.getBidder())){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        AuctionBid auctionBid = auctionBidRepository.findById(auctionBidDto.getAuctionBidId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_BID));
+
+        try{
+            auctionBid.setPrice(auctionBidDto.getPrice());
+            auctionBid.setAuctionBidState(AuctionBidStateEnum.BID);
+        }catch (Exception e ){
+            throw new ApiException(ErrorEnum.FAIL_BID);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.auctionBidEntityToDto(auctionBid));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> getAllUserAuctionTransactionBid() {
+        String username = SecurityUtil.getCurrentUsername().orElse("");
+
+        User loginUser = userRepository.findByUsername(username)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        List<AuctionBidDto> getAuctionBid = auctionBidRepository.findByBidder(loginUser)
+                .stream().map(DataMapper.instance::auctionBidEntityToDto).collect(Collectors.toList());
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(getAuctionBid);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    public ResponseEntity<Object> getAllAuctionTransactionBid(Integer auctionTransactionId) {
         String username = SecurityUtil.getCurrentUsername().orElse("");
 
         User loginUser = userRepository.findByUsername(username)
@@ -340,26 +422,13 @@ public class AuctionTransactionService {
         AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
 
-        AuctionBid getAuctionBid = auctionBidRepository.findByAuctionTransactionIdAndBidderId(auctionTransaction,loginUser);
+        List<AuctionBidDto> getAuctionBid = auctionBidRepository.findByAuctionTransactionId(auctionTransaction)
+                .stream().map(DataMapper.instance::auctionBidEntityToDto).collect(Collectors.toList());
 
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");
+        result.setData(getAuctionBid);
 
-        if(getAuctionBid==null){
-            AuctionBid auctionBid = new AuctionBid();
-            auctionBid.setAuctionTransactionId(auctionTransaction);
-            auctionBid.setBidderId(loginUser);
-            auctionBid.setPrice(auctionTransactionBidFormDto.getPrice());
-            try{
-                auctionBidRepository.save(auctionBid);
-                result.setData(DataMapper.instance.auctionBidEntityToDto(auctionBid));
-            }catch (Exception e){
-                throw new ApiException(ErrorEnum.FAIL_BID);
-            }
-        }else{
-            getAuctionBid.setPrice(auctionTransactionBidFormDto.getPrice());
-            result.setData(DataMapper.instance.auctionBidEntityToDto(getAuctionBid));
-        }
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
@@ -372,7 +441,8 @@ public class AuctionTransactionService {
         AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
 
-        AuctionBid getAuctionBid = auctionBidRepository.findByAuctionTransactionIdAndBidderId(auctionTransaction,loginUser);
+        AuctionBid getAuctionBid = auctionBidRepository.findByAuctionTransactionIdAndBidder(auctionTransaction,loginUser)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_BID));
 
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");
