@@ -33,6 +33,7 @@ public class HomeController {
         int generalIndex=0;
         int auctionIndex=0;
         int maxIndex=Math.max(topGeneralList.size(),topAuctionList.size());
+
         for(int i=0;i<maxIndex;i++){
             if(auctionIndex < topAuctionList.size() && generalIndex < topGeneralList.size()){
                 if(topAuctionList.get(auctionIndex).getViewCount()>topGeneralList.get(generalIndex).getViewCount()){
@@ -45,10 +46,10 @@ public class HomeController {
             }else {
                 topList.add(topAuctionList.get(auctionIndex++));
             }
-
         }
 
         Map<String,Object> data = new HashMap<>();
+        result.setStatus("success");
         data.put("topList",topList);
         data.put("generalTransactionList", generalTransactionService.topGeneralList("createdAt"));
         data.put("auctionTransactionList",auctionTransactionService.topAuctionList("createdAt"));
