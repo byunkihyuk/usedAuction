@@ -47,14 +47,17 @@ public class SecurityConfig {
                 //.formLogin().disable()
                 .authorizeHttpRequests(authorize -> authorize
                         .antMatchers(HttpMethod.POST, "/api/sign-up").permitAll()
+                        .antMatchers(HttpMethod.POST, "/api/sign-up/usernameCheck").permitAll()
+                        .antMatchers(HttpMethod.POST, "/api/sign-up/nicknameCheck").permitAll()
                         .antMatchers(HttpMethod.POST, "/api/sign-in").permitAll()
-                        .antMatchers(HttpMethod.GET, "/api/general/**").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/general/*").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/general").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/auction/*").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/main").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*/general-sell-history").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*/auction-sell-history").permitAll()
+                        .antMatchers(HttpMethod.GET, "/chatting").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -63,3 +66,4 @@ public class SecurityConfig {
     }
 
 }
+
