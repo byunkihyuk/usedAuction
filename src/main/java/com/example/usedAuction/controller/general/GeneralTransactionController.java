@@ -1,6 +1,7 @@
 package com.example.usedAuction.controller.general;
 
 import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
+import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.service.general.GeneralTransactionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -17,11 +18,11 @@ import java.util.List;
 public class GeneralTransactionController {
     private final GeneralTransactionService generalTransactionService;
 
-    @PostMapping(value = "/general",
-            consumes = {MediaType.APPLICATION_JSON_VALUE,
-            MediaType.MULTIPART_FORM_DATA_VALUE})
+    @PostMapping(value = "/general")
     public ResponseEntity<Object> postGeneralTransaction(@RequestPart @Valid GeneralTransactionFormDto generalTransactionFormDto,
-                                                         @RequestPart List<MultipartFile> multipartFile ){
+                                                         @RequestPart(required = false) List<MultipartFile> multipartFile ){
+        System.out.println("이미지 "+(multipartFile!=null ? multipartFile.size() : "널"));
+
         return generalTransactionService.postGeneralTransaction(generalTransactionFormDto,multipartFile);
     }
 
@@ -33,8 +34,9 @@ public class GeneralTransactionController {
 
     @GetMapping(value = "/general")
     public ResponseEntity<Object> getAllGeneralTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
-                                                           @RequestParam(required = false,defaultValue = "10") Integer size,
-                                                           @RequestParam(required = false,defaultValue = "asc") String sort ){
+                                                           @RequestParam(required = false,defaultValue = "20") Integer size,
+                                                           @RequestParam(required = false,defaultValue = "asc") String sort,
+                                                           @RequestParam(required = false,defaultValue = "") String state){
         return generalTransactionService.getAllGeneralTransaction(page,size,sort);
     }
 
