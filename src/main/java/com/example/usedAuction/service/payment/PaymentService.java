@@ -294,4 +294,144 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @Transactional
+    public ResponseEntity<Object> auctionPaymentRequest(PayInfoDto payInfoDto, Integer auctionBidId) {
+        // 글이 존재하는지
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findById(payInfoDto.getAuctionTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        // 입찰 정보가 있는지
+        AuctionBid auctionBid = auctionBidRepository.findById(auctionBidId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_BID));
+
+        // 판매자 구매자가 있는 유저인지 확인
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        User bidder = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!(Objects.equals(bidder.getUserId(), payInfoDto.getBuyer()))){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        payInfoDto.setAuctionTransactionId(payInfoDto.getAuctionTransactionId());
+        PayInfo savePay = new PayInfo();
+        savePay.setSeller(seller);
+        savePay.setBuyer(bidder);
+        savePay.setTransactionMoney(payInfoDto.getTransactionMoney());
+        savePay.setTransactionRequestType(payInfoDto.getTransactionRequestType());
+        savePay.setTransactionRequestState(payInfoDto.getTransactionRequestState());
+        savePay.setUsedTransactionType(payInfoDto.getUsedTransactionType());
+        savePay.setAuctionTransactionId(auctionTransaction);
+        savePay.setTransactionRequestState(TransactionRequestStateEnum.WAIT);
+
+        // 돈 송금 기록
+        PayInfo payInfo = null;
+        try {
+            payInfo = payInfoRepository.save(savePay);
+            auctionBid.setAuctionBidState(AuctionBidStateEnum.WAIT);
+            auctionTransaction.setTransactionState(TransactionStateEnum.RESERVATION);
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.AUCTION_TRANSACTION_PAYMENT_FAIL);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> auctionPaymentApprove(PayInfoDto payInfoDto, Integer auctionBidId) {
+
+        PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
+
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findById(payInfoDto.getAuctionTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        // 입찰 정보가 있는지
+        AuctionBid auctionBid = auctionBidRepository.findById(auctionBidId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_BID));
+
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        User buyer = userRepository.findByUserIdPessimisticLock(payInfoDto.getBuyer())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!(Objects.equals(loginUser.getUserId(), seller.getUserId()) || Objects.equals(loginUser.getUserId(), buyer.getUserId()))){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        if(seller.getMoney() < payInfoDto.getTransactionMoney()){
+            throw new ApiException(ErrorEnum.INSUFFICIENT_MONEY);
+        }
+
+        // sender 잔액 수정
+        try {
+            seller.setMoney(seller.getMoney() + payInfo.getTransactionMoney());
+            buyer.setMoney(buyer.getMoney() - payInfo.getTransactionMoney());
+            auctionBid.setAuctionBidState(AuctionBidStateEnum.APPROVE);
+            payInfo.setTransactionRequestState(TransactionRequestStateEnum.APPROVE);
+            auctionTransaction.setTransactionState(TransactionStateEnum.COMPLETE);
+        }catch ( Exception e ){
+            throw new ApiException(ErrorEnum.AUCTION_TRANSACTION_APPROVE_FAIL);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> auctionPaymentCancel(PayInfoDto payInfoDto, Integer auctionBidId) {
+        PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
+
+        if(payInfo.getTransactionRequestState().equals(TransactionRequestStateEnum.APPROVE)){
+            throw new ApiException(ErrorEnum.PAYMENT_COMPLETED_CANCEL_FAIL);
+        }
+
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findById(payInfoDto.getAuctionTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        // 입찰 정보가 있는지
+        AuctionBid auctionBid = auctionBidRepository.findById(auctionBidId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_BID));
+
+        User seller = userRepository.findByUserIdPessimisticLock(payInfoDto.getSeller())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        User buyer = userRepository.findByUserIdPessimisticLock(payInfoDto.getBuyer())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!(Objects.equals(loginUser.getUserId(), seller.getUserId()) || Objects.equals(loginUser.getUserId(), buyer.getUserId()))){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
+        }
+
+        try {
+            auctionBid.setAuctionBidState(AuctionBidStateEnum.CANCEL);
+            payInfo.setTransactionRequestState(TransactionRequestStateEnum.CANCEL);
+            auctionTransaction.setTransactionState(TransactionStateEnum.SALE);
+        }catch (Exception e ){
+            throw new ApiException(ErrorEnum.PAYMENT_CANCEL_FAIL);
+        }
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(DataMapper.instance.payInfoEntityToDto(payInfo));
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 }
