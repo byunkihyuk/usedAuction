@@ -1,8 +1,10 @@
 package com.example.usedAuction.controller.auction;
 
+import com.example.usedAuction.dto.auction.AuctionBidDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionBidFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
 import com.example.usedAuction.entity.TransactionImage;
+import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.service.auction.AuctionTransactionService;
@@ -57,11 +59,29 @@ public class AuctionTransactionController {
         return auctionTransactionService.deleteAuctionTransaction(auctionTransactionId);
     }
 
-    @PostMapping(value = "/auction/{auctionTransactionId}/bid")
-    public ResponseEntity<Object> auctionBid(@PathVariable Integer auctionTransactionId,@RequestBody AuctionTransactionBidFormDto auctionTransactionBidFormDto){
-        return auctionTransactionService.postAuctionTransactionBid(auctionTransactionBidFormDto,auctionTransactionId);
+    @PostMapping(value = "/auction/bid")
+    public ResponseEntity<Object> auctionBid(@RequestBody AuctionBidDto auctionBidDto){
+        return auctionTransactionService.postAuctionTransactionBid(auctionBidDto);
     }
 
+    @PutMapping(value = "/auction/bid")
+    public ResponseEntity<Object> auctionBidUpdate(@RequestBody AuctionBidDto auctionBidDto){
+        return auctionTransactionService.updateAuctionTransactionBid(auctionBidDto);
+    }
+
+    // 글 관련 전체
+    @GetMapping(value = "/auction/{auctionTransactionId}/bid/all")
+    public ResponseEntity<Object> getAllAuctionBid(@PathVariable Integer auctionTransactionId){
+        return auctionTransactionService.getAllAuctionTransactionBid(auctionTransactionId);
+    }
+
+    // 사용자의 모든 입찰 정보
+    @GetMapping(value = "/auction/bid/user")
+    public ResponseEntity<Object> getAllUserAuctionBid(){
+        return auctionTransactionService.getAllUserAuctionTransactionBid();
+    }
+
+    // 경매글 입장 시 로그인한 사용자 본인의 입찰정보
     @GetMapping(value = "/auction/{auctionTransactionId}/bid")
     public ResponseEntity<Object> getAuctionBid(@PathVariable Integer auctionTransactionId){
         return auctionTransactionService.getAuctionTransactionBid(auctionTransactionId);
