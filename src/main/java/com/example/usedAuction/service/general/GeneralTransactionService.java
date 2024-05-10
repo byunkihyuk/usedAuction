@@ -42,8 +42,6 @@ public class GeneralTransactionService {
     private final UserRepository userRepository;
     private final GeneralTransactionImageRepository generalTransactionImageRepository;
     private final S3UploadService s3UploadService;
-    @Value("${cloud.aws.s3.bucket}")
-    private String bucket;
 
     @Transactional
     public ResponseEntity<Object> postGeneralTransaction(GeneralTransactionFormDto generalTransactionFormDto, List<MultipartFile> imageFiles) {
@@ -131,12 +129,32 @@ public class GeneralTransactionService {
     }
 
 
-    public ResponseEntity<Object> getAllGeneralTransaction(Integer page, Integer size, String sort) {
+    public ResponseEntity<Object> getAllGeneralTransaction(Integer page, Integer size, String sort,String state) {
         Sort s = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page,size, s);
-        List<GeneralTransactionDto> resultGeneralTransaction = generalTransactionRepository.findAll(pageable).stream()
-                .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+        List<GeneralTransactionDto> resultGeneralTransaction = new ArrayList<>();
+        if(state.equals("전체")){
+            resultGeneralTransaction = generalTransactionRepository.findAll(pageable).stream()
+                    .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+        }else{
+            switch (state){
+                case "판매중":
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE,pageable).stream()
+                            .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+                    break;
+                case "예약중":
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.RESERVATION,pageable).stream()
+                            .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+                    break;
+                case "판매완료":
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE,pageable).stream()
+                            .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
+                    break;
+            }
+
+        }
+
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");
         Map<String,Object> data = new HashMap<>();
