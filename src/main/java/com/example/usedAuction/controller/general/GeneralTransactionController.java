@@ -36,8 +36,8 @@ public class GeneralTransactionController {
     public ResponseEntity<Object> getAllGeneralTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
                                                            @RequestParam(required = false,defaultValue = "20") Integer size,
                                                            @RequestParam(required = false,defaultValue = "asc") String sort,
-                                                           @RequestParam(required = false,defaultValue = "") String state){
-        return generalTransactionService.getAllGeneralTransaction(page,size,sort);
+                                                           @RequestParam(required = false,defaultValue = "전체") String state){
+        return generalTransactionService.getAllGeneralTransaction(page,size,sort,state);
     }
 
     @PutMapping(value = "/general/{generalTransactionId}",
