@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum TransactionStateEnum {
     SALE("판매중"),
-    RESERVATION("예약중"),
+    PROGRESS("거래중"),
     COMPLETE("판매완료");
 
     @JsonValue // enum 값 문자열 출력
