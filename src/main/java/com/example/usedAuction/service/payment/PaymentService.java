@@ -197,10 +197,10 @@ public class PaymentService {
         // 결제 정보가 있는지
         PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
-        
+
         try {
             // 거래 글 예약중으로 변경
-            generalTransaction.setTransactionState(TransactionStateEnum.RESERVATION);
+            generalTransaction.setTransactionState(TransactionStateEnum.PROGRESS);
             payInfo.setTransactionRequestState(TransactionRequestStateEnum.PROGRESS);
         }catch (Exception e){
             throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_APPROVE_FAIL);
@@ -331,7 +331,7 @@ public class PaymentService {
         try {
             payInfo = payInfoRepository.save(savePay);
             auctionBid.setAuctionBidState(AuctionBidStateEnum.WAIT);
-            auctionTransaction.setTransactionState(TransactionStateEnum.RESERVATION);
+            auctionTransaction.setTransactionState(TransactionStateEnum.PROGRESS);
         }catch (Exception e){
             throw new ApiException(ErrorEnum.AUCTION_TRANSACTION_PAYMENT_FAIL);
         }
