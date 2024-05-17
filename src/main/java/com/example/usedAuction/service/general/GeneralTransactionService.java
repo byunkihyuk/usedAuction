@@ -144,7 +144,7 @@ public class GeneralTransactionService {
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
                 case "예약중":
-                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.RESERVATION,pageable).stream()
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS,pageable).stream()
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
                 case "판매완료":
@@ -249,7 +249,7 @@ public class GeneralTransactionService {
             //이름 목록
             List<String> newOriginUrlList =  multipartFile.stream().map(MultipartFile::getOriginalFilename).collect(Collectors.toList());
             List<String> updateOriginUrlList =  generalTransactionImages.stream().map(GeneralTransactionImage::getOriginName).collect(Collectors.toList());
-            
+
             int maxIndex = Math.max(generalTransactionImages.size(), multipartFile.size());
             for(int i=0;i<maxIndex;i++){
                 GeneralTransactionImage imgEntity = null;
