@@ -38,7 +38,12 @@ public class PayController {
         return paymentService.generalPayment(payInfoDto);
     }
 
-    @PostMapping(value = "/general/progress")
+    @PutMapping(value = "/general/payment")
+    public ResponseEntity<Object> generalPaymentUpdate(@RequestBody PayInfoDto payInfoDto){
+        return paymentService.generalPaymentUpdate(payInfoDto);
+    }
+
+    @PutMapping(value = "/general/progress")
     public ResponseEntity<Object> generalPaymentProgress(@RequestBody PayInfoDto payInfoDto){
         return paymentService.generalPaymentProgress(payInfoDto);
     }
@@ -53,20 +58,20 @@ public class PayController {
         return paymentService.generalPaymentCancel(payInfoDto);
     }
 
-    // 경매 거래 글 입찰 요청
-    @PostMapping(value = "/auction/auctionBid/{auctionBidId}")
+    // 경매 거래 글 입찰 거래
+    @PostMapping(value = "/auction/bid/{auctionBidId}")
     public ResponseEntity<Object> auctionPaymentRequest(@RequestBody PayInfoDto payInfoDto, @PathVariable Integer auctionBidId){
         return paymentService.auctionPaymentRequest(payInfoDto,auctionBidId);
     }
 
     // 경매 거래 글 승인
-    @PutMapping(value = "/auction/auctionBid/{auctionBidId}/approve")
+    @PutMapping(value = "/auction/bid/{auctionBidId}/approve")
     public ResponseEntity<Object> auctionPaymentApprove(@RequestBody PayInfoDto payInfoDto, @PathVariable Integer auctionBidId){
         return paymentService.auctionPaymentApprove(payInfoDto,auctionBidId);
     }
 
     // 경매 거래 글 취소
-    @PutMapping(value = "/auction/auctionBid/{auctionBidId}/cancel")
+    @PutMapping(value = "/auction/bid/{auctionBidId}/cancel")
     public ResponseEntity<Object> auctionPaymentCancel(@RequestBody PayInfoDto payInfoDto, @PathVariable Integer auctionBidId){
         return paymentService.auctionPaymentCancel(payInfoDto,auctionBidId);
     }
