@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -25,9 +27,9 @@ public class UserController {
         return userService.signUp(userSignUpFormDto);
     }
 
-    @PostMapping("/sign-up/usernameCheck")
-    public String usernameCheck(@RequestParam("username") String username){
-        return userService.findByUsername(username);
+    @PostMapping("/sign-up/username-check")
+    public ResponseEntity<Object> usernameCheck(@RequestBody Map<String,String> getJson){
+        return userService.findByUsername(getJson.get("username"));
     }
 
     @PostMapping("/sign-up/nicknameCheck")
@@ -45,6 +47,7 @@ public class UserController {
     public ResponseEntity<Object> getMyPage(@PathVariable Integer userId) {
         return userService.getUserPage(userId);
     }
+
     @PutMapping(value = "/user/{userId}")
     public ResponseEntity<Object> updateUser(@PathVariable Integer userId, @RequestBody @Valid UserUpdateForm userUpdateForm){
         return userService.updateUser(userId,userUpdateForm);
@@ -70,5 +73,4 @@ public class UserController {
     public ResponseEntity<Object> getUserAuctionTransactionBuyList(@PathVariable Integer userId) {
         return userService.getUserAuctionTransactionBuyList(userId);
     }
-
 }
