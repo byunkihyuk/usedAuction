@@ -248,13 +248,18 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
-    public ResponseEntity<Object> getUserGeneralTransactionSellList(Integer userId) {
+    public ResponseEntity<Object> getUserGeneralTransactionSellList(Integer userId, Integer size, Integer page, String sort) {
+        Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
+                Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page,size, pageableSort);
+
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.OK;
 
-        User idUser = userRepository.findById(userId)
+        User loginUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
-        List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllBySellerOrderByCreatedAtDesc(idUser)
+
+        List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllBySeller(loginUser,pageable)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
 
         result.setData(generalTransactionDtoList);

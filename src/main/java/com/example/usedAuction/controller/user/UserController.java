@@ -67,8 +67,11 @@ public class UserController {
 
 
     @GetMapping(value = "/user/{userId}/general-sell-history")
-    public ResponseEntity<Object> getUserGeneralTransactionSellList(@PathVariable Integer userId) {
-        return userService.getUserGeneralTransactionSellList(userId);
+    public ResponseEntity<Object> getUserGeneralTransactionSellList(@PathVariable Integer userId,
+                                                                    @RequestParam(value = "size", required = false)Integer size,
+                                                                    @RequestParam(value = "page", required = false)Integer page,
+                                                                    @RequestParam(value = "sort", required = false)String sort) {
+        return userService.getUserGeneralTransactionSellList(userId,size,page,sort);
     }
   
     @GetMapping(value = "/user/{userId}/auction-sell-history")
