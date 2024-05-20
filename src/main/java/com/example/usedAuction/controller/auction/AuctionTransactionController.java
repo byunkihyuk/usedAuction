@@ -1,14 +1,19 @@
 package com.example.usedAuction.controller.auction;
 
+import com.example.usedAuction.controller.general.GeneralTransactionController;
 import com.example.usedAuction.dto.auction.AuctionBidDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionBidFormDto;
+import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
+import com.example.usedAuction.dto.general.GeneralTransactionDto;
+import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.entity.TransactionImage;
 import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
 import com.example.usedAuction.service.auction.AuctionTransactionService;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -41,8 +46,17 @@ public class AuctionTransactionController {
     @GetMapping(value = "/auction")
     public ResponseEntity<Object> getAllAuctionTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
                                                            @RequestParam(required = false,defaultValue = "10") Integer size,
-                                                           @RequestParam(required = false,defaultValue = "asc") String sort){
-        return auctionTransactionService.getAllAuctionTransaction(page,size,sort);
+                                                           @RequestParam(required = false,defaultValue = "asc") String sort,
+                                                           @RequestParam(required = false,defaultValue = "전체") String state){
+        GetAllAuctionTransactionResultDto getAllAuctionTransactionResultDto = new GetAllAuctionTransactionResultDto();
+        getAllAuctionTransactionResultDto.setTransactionList(auctionTransactionService.getAllAuctionTransaction(page,size,sort,state));
+        getAllAuctionTransactionResultDto.setTotalCount(auctionTransactionService.getAllTotalCount(state));
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(getAllAuctionTransactionResultDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @PutMapping(value = "/auction/{auctionTransactionId}", consumes = {
@@ -85,6 +99,15 @@ public class AuctionTransactionController {
     @GetMapping(value = "/auction/{auctionTransactionId}/bid")
     public ResponseEntity<Object> getAuctionBid(@PathVariable Integer auctionTransactionId){
         return auctionTransactionService.getAuctionTransactionBid(auctionTransactionId);
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    static class GetAllAuctionTransactionResultDto{
+        List<AuctionTransactionDto> transactionList;
+        int totalCount;
     }
 
 }

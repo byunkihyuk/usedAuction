@@ -53,17 +53,18 @@ public class AuctionTransactionService {
             Map<String,Object> map = new HashMap<>();
             Map<String,Object> data = new HashMap<>();
             data.put("message", ErrorEnum.IMAGE_MAX_COUNT);
-            map.put("data",data);
             result.setStatus("fail");
-            result.setData(map);
+            result.setData(data);
             status = HttpStatus.BAD_REQUEST;
         }else{
             // 로그인된 유저 정보
             User loginUser = SecurityUtil.getCurrentUsername()
                     .flatMap(userRepository::findOneWithAuthoritiesByUsername)
                     .orElseThrow(()->new ApiException(ErrorEnum.UNAUTHORIZED_ERROR));
+            auctionTransactionFormDto.setSeller(loginUser.getUserId());
             AuctionTransaction auctionTransaction = DataMapper.instance.auctionTransactionFormToEntity(auctionTransactionFormDto);
-            auctionTransaction.setSeller(loginUser);
+            auctionTransaction.setViewCount(0);
+            auctionTransaction.setHighestBid(0);
             AuctionTransaction getAuctionTransaction=null;
             // 게시글 저장 후 반환
             try{
@@ -73,7 +74,7 @@ public class AuctionTransactionService {
             }
             // 이미지 저장(s3 업로드) 후 결과 반환
             List<AuctionTransactionImage> imageList = new ArrayList<>();
-            List<AuctionTransactionImage> successGeneralImageDtoList=null;
+            List<AuctionTransactionImage> successGeneralImageDtoList = new ArrayList<>();
             List<AuctionTransactionImageDto> resultImageList = new ArrayList<>();
             try{
                 if(multipartFileList!=null){ // 이미지가 있을때만 실행
@@ -92,30 +93,30 @@ public class AuctionTransactionService {
                         AuctionTransactionImage auctionTransactionImage = DataMapper.instance.auctionImageDtoToEntity(auctionTransactionImageDto);
                         auctionTransactionImage.setAuctionTransactionId(getAuctionTransaction);
                         imageList.add(auctionTransactionImage);
-                        successGeneralImageDtoList =  auctionTransactionImageRepository.saveAll(imageList);
-                        getAuctionTransaction.setThumbnail(successGeneralImageDtoList.get(0).getUploadUrl());
-                        resultImageList = successGeneralImageDtoList.stream()
-                                .map(DataMapper.instance::auctionImageEntityToDto)
-                                .collect(Collectors.toList());
                     }
+                    successGeneralImageDtoList =  auctionTransactionImageRepository.saveAll(imageList);
+                    getAuctionTransaction.setThumbnail(successGeneralImageDtoList.get(0).getUploadUrl());
                 }
+                resultImageList = successGeneralImageDtoList.stream()
+                        .map(DataMapper.instance::auctionImageEntityToDto)
+                        .collect(Collectors.toList());
             }catch (Exception e ){
                 throw  new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
             }
             AuctionTransactionDto resultGeneralTransactionDto = DataMapper.instance.auctionTransactionToDto(getAuctionTransaction);
             resultGeneralTransactionDto.setImages(resultImageList);
-            Map<String,Object> map = new HashMap<>();
-            map.put("data",resultGeneralTransactionDto);
+
             result.setStatus("success");
-            result.setData(map);
+            result.setData(resultGeneralTransactionDto);
         }
         return ResponseEntity.status(status).body(result);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<Object> getAuctionTransaction(Integer auctionTransactionId) {
         AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+        auctionTransaction.setViewCount(auctionTransaction.getViewCount()+1);
 
         List<AuctionTransactionImage> auctionTransactionImages = auctionTransactionImageRepository.findAllByAuctionTransactionIdOrderByImageSeq(auctionTransaction);
 
@@ -124,6 +125,7 @@ public class AuctionTransactionService {
                 .map(DataMapper.instance::auctionImageEntityToDto)
                 .collect(Collectors.toList()));
 
+
         ResponseResult<Object> result = new ResponseResult<>();
         result.setData(resultAuctionTransactionDto);
         result.setStatus("success");
@@ -131,16 +133,32 @@ public class AuctionTransactionService {
     }
 
     @Transactional(readOnly = true)
-    public ResponseEntity<Object> getAllAuctionTransaction(Integer page, Integer size, String sort) {
+    public List<AuctionTransactionDto> getAllAuctionTransaction(Integer page, Integer size, String sort,String state) {
         Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page,size, pageableSort);
-        List<AuctionTransactionDto> resultGeneralTransaction = auctionTransactionRepository.findAll(pageable).stream()
-                .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
-        ResponseResult<Object> result = new ResponseResult<>();
-        result.setStatus("success");
-        result.setData(resultGeneralTransaction);
-        return ResponseEntity.status(HttpStatus.OK).body(result);
+        List<AuctionTransactionDto> resultAuctionTransaction = new ArrayList<>();
+
+        if(state.equals("전체")){
+            resultAuctionTransaction = auctionTransactionRepository.findAll(pageable).stream()
+                    .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+        }else{
+            switch (state){
+                case "판매중":
+                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE,pageable).stream()
+                            .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+                    break;
+                case "거래중":
+                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS,pageable).stream()
+                            .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+                    break;
+                case "판매완료":
+                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE,pageable).stream()
+                            .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+                    break;
+            }
+        }
+        return resultAuctionTransaction;
     }
 
     @Transactional
@@ -152,7 +170,7 @@ public class AuctionTransactionService {
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
         //s3 이미지 삭제 하기 위해서 가져옴
         List<AuctionTransactionImage> auctionTransactionImageList = auctionTransactionImageRepository.findAllByAuctionTransactionId(auctionTransaction);
-        int a =1;
+
         try{
             auctionTransactionRepository.delete(auctionTransaction);
             auctionTransactionImageRepository.deleteAll(auctionTransactionImageList);
@@ -173,7 +191,7 @@ public class AuctionTransactionService {
     @Transactional
     public ResponseEntity<Object> updateAuctionTransaction(Integer auctionTransactionId, AuctionTransactionFormDto auctionTransactionFormDto, List<MultipartFile> multipartFileList) {
         ResponseResult<Object> result = new ResponseResult<>();
-        HttpStatus resultHttp = HttpStatus.OK;
+
         AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
 
@@ -188,23 +206,20 @@ public class AuctionTransactionService {
         }catch (Exception e){
             throw new ApiException(ErrorEnum.IMAGE_UPDATE_ERROR);
         }
-        result.setStatus("success");
-        Map<String,Object> data = new HashMap<>();
-        AuctionTransactionDto resultGeneralDto = DataMapper.instance.auctionTransactionToDto(auctionTransaction);
-        resultGeneralDto.setImages(updateTransactionImage);
-        data.put("data",resultGeneralDto);
-        result.setData(data);
 
         if(multipartFileList!=null && !multipartFileList.isEmpty()){
             if(updateTransactionImage==null){
-                data = new HashMap<>();
-                data.put("message","일반 거래 글 수정 실패");
-                result.setData(data);
-                result.setStatus("fail");
-                resultHttp = HttpStatus.BAD_REQUEST;
+            throw  new ApiException(ErrorEnum.IMAGE_UPDATE_ERROR);
             }
         }
-        return ResponseEntity.status(resultHttp).body(result);
+
+        AuctionTransactionDto resultGeneralDto = DataMapper.instance.auctionTransactionToDto(auctionTransaction);
+        resultGeneralDto.setImages(updateTransactionImage);
+
+        result.setStatus("success");
+        result.setData(resultGeneralDto);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @Transactional
@@ -307,8 +322,11 @@ public class AuctionTransactionService {
         auctionTransaction.setContent(auctionTransactionFormDto.getContent());
         auctionTransaction.setPrice(auctionTransactionFormDto.getPrice());
         auctionTransaction.setTransactionMode(auctionTransactionFormDto.getTransactionMode());
-        auctionTransaction.setLocation(auctionTransactionFormDto.getLocation());
+        auctionTransaction.setAddress(auctionTransactionFormDto.getAddress());
+        auctionTransaction.setDetailAddress(auctionTransactionFormDto.getDetailAddress());
         auctionTransaction.setPayment(auctionTransactionFormDto.getPayment());
+        auctionTransaction.setStartedAt(auctionTransactionFormDto.getStartedAt());
+        auctionTransaction.setFinishedAt(auctionTransactionFormDto.getFinishedAt());
     }
 
     private AuctionTransactionImage uploadAndConvertFileToEntity(MultipartFile multipartFile, int seqIndex, AuctionTransaction auctionTransaction) {
@@ -340,10 +358,6 @@ public class AuctionTransactionService {
         User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-        if(!loginUser.getUserId().equals(auctionBidDto.getBidder())){
-            throw new ApiException(ErrorEnum.NOT_MATCH_USER);
-        }
-
         // 경매 글이 존재하는지 확인
         AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionBidDto.getAuctionTransactionId())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
@@ -360,9 +374,11 @@ public class AuctionTransactionService {
         auctionBidDto.setAuctionBidState(AuctionBidStateEnum.BID);
         AuctionBid auctionBid = DataMapper.instance.auctionBidDtoToEntity(auctionBidDto);
 
+
         try{
-            auctionBidRepository.save(auctionBid);
-            result.setData(DataMapper.instance.auctionBidEntityToDto(auctionBid));
+            AuctionBid resultBid = auctionBidRepository.save(auctionBid);
+            result.setData(DataMapper.instance.auctionBidEntityToDto(resultBid));
+            auctionTransaction.setHighestBid((resultBid.getPrice()));
         }catch (Exception e){
             throw new ApiException(ErrorEnum.FAIL_BID);
         }
@@ -381,10 +397,14 @@ public class AuctionTransactionService {
 
         AuctionBid auctionBid = auctionBidRepository.findById(auctionBidDto.getAuctionBidId())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_BID));
-
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionBidDto.getAuctionTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
         try{
             auctionBid.setPrice(auctionBidDto.getPrice());
             auctionBid.setAuctionBidState(AuctionBidStateEnum.BID);
+            if(auctionTransaction.getHighestBid() < auctionBid.getPrice()) {
+                auctionTransaction.setHighestBid(auctionBid.getPrice());
+            }
         }catch (Exception e ){
             throw new ApiException(ErrorEnum.FAIL_BID);
         }
@@ -422,7 +442,7 @@ public class AuctionTransactionService {
         AuctionTransaction auctionTransaction = auctionTransactionRepository.findByAuctionTransactionId(auctionTransactionId)
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
 
-        List<AuctionBidDto> getAuctionBid = auctionBidRepository.findByAuctionTransactionId(auctionTransaction)
+        List<AuctionBidDto> getAuctionBid = auctionBidRepository.findAllByAuctionTransactionIdOrderByPriceDesc(auctionTransaction)
                 .stream().map(DataMapper.instance::auctionBidEntityToDto).collect(Collectors.toList());
 
         ResponseResult<Object> result = new ResponseResult<>();
@@ -449,5 +469,22 @@ public class AuctionTransactionService {
         result.setData(DataMapper.instance.auctionBidEntityToDto(getAuctionBid));
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    public int getAllTotalCount(String state) {
+        if(state.equals("전체")){
+            return  auctionTransactionRepository.findAll().size();
+        }else{
+            switch (state){
+                case "판매중":
+                    return auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE).size();
+                case "거래중":
+                    return auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS).size();
+                case "판매완료":
+                    return auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE).size();
+                default:
+                    return 0;
+            }
+        }
     }
 }
