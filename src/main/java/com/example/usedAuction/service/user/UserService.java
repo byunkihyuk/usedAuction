@@ -223,22 +223,25 @@ public class UserService {
     }
 
     @Transactional
-    public ResponseEntity<Object> getUserGeneralTransactionList(Integer userId) {
+    public ResponseEntity<Object> getUserGeneralTransactionBuyList(Integer userId, Integer size, Integer page, String sort) {
+        Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
+                Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page,size, pageableSort);
 
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.OK;
-        Map<String,Object> failData = new HashMap<>();
-        String username = SecurityUtil.getCurrentUsername().orElse("");
-        User loginUser = userRepository.findByUsername(username)
-                .orElse(new User());
+
         User idUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-        if(loginUser.getUsername()==null || !loginUser.getUsername().equals(idUser.getUsername())){
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->  new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(loginUser.getUsername()==null || !loginUser.getUserId().equals(idUser.getUserId())){
             return ResponseEntity.status(status).body(new ResponseResultError("fail","본인 인증 실패"));
         }
 
-        List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllByBuyerOrderByCreatedAtDesc(idUser)
+        List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllByBuyer(loginUser,pageable)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
         result.setData(generalTransactionDtoList);
         result.setStatus("success");
