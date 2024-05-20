@@ -125,9 +125,23 @@ public class AuctionTransactionService {
                 .map(DataMapper.instance::auctionImageEntityToDto)
                 .collect(Collectors.toList()));
 
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElse(null);
+        AuctionBidDto auctionBidDto = null;
 
+        if(loginUser!=null){
+            if(loginUser.getUserId().equals(resultAuctionTransactionDto.getSeller())){
+                resultAuctionTransactionDto.setAuthor(true);
+            }
+            auctionBidDto = DataMapper.instance.auctionBidEntityToDto(
+                    auctionBidRepository.findByAuctionTransactionIdAndBidder(auctionTransaction,loginUser)
+                    .orElse(null));
+        }
         ResponseResult<Object> result = new ResponseResult<>();
-        result.setData(resultAuctionTransactionDto);
+        Map<String, Object> map = new HashMap<>();
+        map.put("transaction",resultAuctionTransactionDto);
+        map.put("mybid",auctionBidDto);
+        result.setData(map);
         result.setStatus("success");
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
