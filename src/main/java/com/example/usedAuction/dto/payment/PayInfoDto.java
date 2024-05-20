@@ -11,7 +11,9 @@ import java.sql.Timestamp;
 public class PayInfoDto {
     private Integer payInfoId;
     private Integer seller;
+    private String sellerNickname;
     private Integer buyer;
+    private String buyerNickname;
     private TransactionRequestTypeEnum transactionRequestType; // 충전 / 결제 / 출금 / 송금
     private TransactionRequestStateEnum transactionRequestState; // 승인 / 대기 / 취소
     private Integer transactionMoney; // 증감액
