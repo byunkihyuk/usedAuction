@@ -45,7 +45,9 @@ public class GeneralTransaction {
     @Enumerated(EnumType.STRING)
     private TransactionModeEnum transactionMode;
 
-    private String location;
+    private String address;
+
+    private String detailAddress;
 
     @Column(name = "transaction_state") // 거래 상태
     @Enumerated(EnumType.STRING)
