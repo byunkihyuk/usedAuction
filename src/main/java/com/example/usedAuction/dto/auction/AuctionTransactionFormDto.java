@@ -16,9 +16,11 @@ public class AuctionTransactionFormDto {
     private String title;
     private String content;
     private Integer price;
+    private Integer seller;
     @NotNull(message = "거래방식을 입력하세요.")
     private TransactionModeEnum transactionMode;
-    private String location;
+    private String address;
+    private String detailAddress;
     private TransactionStateEnum transactionState;
     private TransactionPaymentEnum payment;
     private Timestamp startedAt;

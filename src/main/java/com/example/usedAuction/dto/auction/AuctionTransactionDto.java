@@ -20,17 +20,20 @@ public class AuctionTransactionDto {
     private String thumbnail;
     private String title;
     private String content;
+    private Integer highestBid;
     private Integer price;
     @NotNull(message = "거래방식을 선택하세요.")
     private TransactionModeEnum transactionMode;
-    private String location;
+    private String address;
+    private String detailAddress;
     private TransactionStateEnum transactionState;
-    private String payment;
+    private TransactionPaymentEnum payment;
     private Integer viewCount=0;
     @NotBlank(message = "경매 시작일을 지정하세요")
     private Timestamp startedAt;
     @NotBlank(message = "경매 종료일을 지정하세요")
     private Timestamp finishedAt;
+    private Boolean author=false;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
