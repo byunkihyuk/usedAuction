@@ -112,6 +112,7 @@ public class GeneralTransactionService {
     @Transactional(readOnly = true)
     public ResponseEntity<Object> getGeneralTransaction(Integer generalTransactionId) {
         GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
+        generalTransaction.setViewCount(generalTransaction.getViewCount()+1);
 
         List<GeneralTransactionImage> generalTransactionImages = generalTransactionImageRepository.findAllByGeneralTransactionId(generalTransaction);
 
@@ -120,11 +121,19 @@ public class GeneralTransactionService {
                 .map(DataMapper.instance::generalImageEntityToDto)
                 .collect(Collectors.toList()));
 
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername()
+                .orElse("")).orElse(null);
+
+        if(loginUser!=null){
+            if(loginUser.getUserId().equals(resultGeneralTransactionDto.getSeller())){
+                resultGeneralTransactionDto.setAuthor(true);
+            }
+        }
+
         ResponseResult<Object> result = new ResponseResult<>();
-        Map<Integer,Object> data = new HashMap<>();
-        data.put(resultGeneralTransactionDto.getGeneralTransactionId(),resultGeneralTransactionDto);
-        result.setData(data);
+        result.setData(resultGeneralTransactionDto);
         result.setStatus("success");
+
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
