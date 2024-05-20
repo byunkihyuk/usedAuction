@@ -27,9 +27,13 @@ public class PayInfo {
     @ManyToOne
     private User seller;
 
+    private String sellerNickname;
+
     @JoinColumn(name = "buyer")
     @ManyToOne
     private User buyer;
+
+    private String buyerNickname;
 
     @Column(name = "transaction_request_type")
     @Enumerated(EnumType.STRING)
@@ -37,7 +41,7 @@ public class PayInfo {
 
     @Column(name = "transaction_request_state")
     @Enumerated(EnumType.STRING)
-    private TransactionRequestStateEnum transactionRequestState; // 승인 / 대기 / 취소
+    private TransactionRequestStateEnum transactionRequestState; // 승인 / 대기 / 거래중 / 취소
 
     @Column(name = "transaction_money")
     private Integer transactionMoney = 0; // 샌더의 증감액

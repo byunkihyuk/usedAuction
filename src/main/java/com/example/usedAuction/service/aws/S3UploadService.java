@@ -25,6 +25,9 @@ public class S3UploadService {
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
 
+    @Value("${cloud.aws.cloud-front-url}")
+    private String cloudFrontUrl;
+
     public String uploadImage(MultipartFile multipartFile,String imgName) {
 
         ObjectMetadata meta = new ObjectMetadata();
@@ -36,7 +39,7 @@ public class S3UploadService {
             throw new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
         }
 
-        return amazonS3.getUrl(bucket,imgName).toString();
+        return cloudFrontUrl + amazonS3.getUrl(bucket,imgName).getPath();
     }
 
     public boolean deleteImages(List<?> deleteImageList) {

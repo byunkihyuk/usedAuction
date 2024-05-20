@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
@@ -25,14 +27,14 @@ public class UserController {
         return userService.signUp(userSignUpFormDto);
     }
 
-    @PostMapping("/sign-up/usernameCheck")
-    public String usernameCheck(@RequestParam("username") String username){
-        return userService.findByUsername(username);
+    @PostMapping("/sign-up/username-check")
+    public ResponseEntity<Object> usernameCheck(@RequestBody Map<String,String> getJson){
+        return userService.findByUsername(getJson.get("username"));
     }
 
-    @PostMapping("/sign-up/nicknameCheck")
-    public String nicknameCheck(@RequestParam("nickname") String nickname){
-        return userService.findByNickname(nickname);
+    @PostMapping("/sign-up/nickname-check")
+    public ResponseEntity<Object> nicknameCheck(@RequestBody Map<String,String> getJson){
+        return userService.findByNickname(getJson.get("nickname"));
     }
 
     @PostMapping("/sign-in")
@@ -41,34 +43,51 @@ public class UserController {
     }
 
 
-    @GetMapping(value = "/user/{userId}")
-    public ResponseEntity<Object> getMyPage(@PathVariable Integer userId) {
-        return userService.getUserPage(userId);
+    @GetMapping(value = "/user")
+    public ResponseEntity<Object> getMyPage(@RequestParam(value = "user-id", required = false) String userId) {
+        if(userId==null){
+            return userService.getUserPage();
+        }else{
+            return userService.getUserPage(Integer.parseInt(userId));
+        }
     }
+
     @PutMapping(value = "/user/{userId}")
     public ResponseEntity<Object> updateUser(@PathVariable Integer userId, @RequestBody @Valid UserUpdateForm userUpdateForm){
         return userService.updateUser(userId,userUpdateForm);
     }
 
     @GetMapping(value = "/user/{userId}/general-buy-history")
-    public ResponseEntity<Object> getUserGeneralTransactionList(@PathVariable Integer userId) {
-        return userService.getUserGeneralTransactionList(userId);
+    public ResponseEntity<Object> getUserGeneralTransactionList(@PathVariable Integer userId,
+                                                                @RequestParam(value = "size", required = false)Integer size,
+                                                                @RequestParam(value = "page", required = false)Integer page,
+                                                                @RequestParam(value = "sort", required = false)String sort) {
+        return userService.getUserGeneralTransactionBuyList(userId,size,page,sort);
     }
 
 
     @GetMapping(value = "/user/{userId}/general-sell-history")
-    public ResponseEntity<Object> getUserGeneralTransactionSellList(@PathVariable Integer userId) {
-        return userService.getUserGeneralTransactionSellList(userId);
+    public ResponseEntity<Object> getUserGeneralTransactionSellList(@PathVariable Integer userId,
+                                                                    @RequestParam(value = "size", required = false)Integer size,
+                                                                    @RequestParam(value = "page", required = false)Integer page,
+                                                                    @RequestParam(value = "sort", required = false)String sort) {
+        return userService.getUserGeneralTransactionSellList(userId,size,page,sort);
     }
   
     @GetMapping(value = "/user/{userId}/auction-sell-history")
-    public ResponseEntity<Object> getUserAuctionTransactionSellList(@PathVariable Integer userId) {
-        return userService.getUserAuctionTransactionSellList(userId);
+    public ResponseEntity<Object> getUserAuctionTransactionSellList(@PathVariable Integer userId,
+                                                                    @RequestParam(value = "size", required = false)Integer size,
+                                                                    @RequestParam(value = "page", required = false)Integer page,
+                                                                    @RequestParam(value = "sort", required = false)String sort) {
+        return userService.getUserAuctionTransactionSellList(userId,size,page,sort);
     }
   
     @GetMapping(value = "/user/{userId}/auction-buy-history")
-    public ResponseEntity<Object> getUserAuctionTransactionBuyList(@PathVariable Integer userId) {
-        return userService.getUserAuctionTransactionBuyList(userId);
+    public ResponseEntity<Object> getUserAuctionTransactionBuyList(@PathVariable Integer userId,
+                                                                   @RequestParam(value = "size", required = false)Integer size,
+                                                                   @RequestParam(value = "page", required = false)Integer page,
+                                                                   @RequestParam(value = "sort", required = false)String sort) {
+        return userService.getUserAuctionTransactionBuyList(userId,size,page,sort);
     }
 
 }

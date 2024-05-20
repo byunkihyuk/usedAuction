@@ -19,7 +19,8 @@ public class GeneralTransactionFormDto {
     private String content;
     private Integer price;
     private TransactionModeEnum transactionMode;
-    private String location;
+    private String address;
+    private String detailAddress;
     private TransactionStateEnum transactionState = TransactionStateEnum.SALE;
     private TransactionPaymentEnum payment;
 }

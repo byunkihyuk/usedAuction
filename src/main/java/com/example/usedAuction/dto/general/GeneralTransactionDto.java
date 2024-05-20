@@ -27,11 +27,12 @@ public class GeneralTransactionDto {
     private String content;
     private Integer price;
     private TransactionModeEnum transactionMode;
-    private String location;
+    private String address;
+    private String detailAddress;
     private TransactionStateEnum transactionState;
     private TransactionPaymentEnum payment;
     private Integer viewCount=0;
     private Timestamp createdAt;
     private Timestamp updatedAt;
-
+    private Boolean author = false;
 }

@@ -6,6 +6,9 @@ import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
 import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import lombok.Data;
+import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -17,6 +20,7 @@ import java.util.List;
 
 @Data
 @Entity
+@DynamicInsert
 @EntityListeners(AuditingEntityListener.class)
 public class AuctionTransaction {
     @Id
@@ -40,11 +44,16 @@ public class AuctionTransaction {
 
     private Integer price;
 
+    @ColumnDefault(value = "0")
+    private Integer highestBid;
+
     @Column(name = "transaction_mode")
     @Enumerated(EnumType.STRING)
     private TransactionModeEnum transactionMode;
 
-    private String location;
+    private String address;
+
+    private String detailAddress;
 
     @Column(name = "transaction_sate")
     @Enumerated(EnumType.STRING)
@@ -53,8 +62,8 @@ public class AuctionTransaction {
     @Enumerated(EnumType.STRING)
     private TransactionPaymentEnum payment;
 
-    @Column(columnDefinition = "integer default 0")
-    private Integer viewCount=0;
+    @ColumnDefault("0")
+    private Integer viewCount;
 
     @Column(name = "started_at")
     private Timestamp startedAt;

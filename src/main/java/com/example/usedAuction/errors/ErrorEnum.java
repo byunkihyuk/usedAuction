@@ -26,7 +26,8 @@ public enum ErrorEnum {
     IMAGE_DELETE_ERROR(HttpStatus.BAD_REQUEST,"이미지 삭제 에러"),
     IMAGE_UPLOAD_ERROR(HttpStatus.BAD_REQUEST,"이미지 업로드 에러"),
     NOT_FOUND_USER(HttpStatus.BAD_REQUEST,"없는 사용자 입니다."),
-    NOT_FOUND_CHATROOM(HttpStatus.BAD_REQUEST,"없는 채팅방 입니다." ), 
+    NOT_FOUND_CHATROOM(HttpStatus.BAD_REQUEST,"없는 채팅방 입니다." ),
+    CHAT_ROOM_CREATE_ERROR(HttpStatus.BAD_REQUEST,"채팅방 생성 에러" ),
     CHAT_MESSAGE_SEND_ERROR(HttpStatus.BAD_REQUEST,"채팅 메시지 저장 에러" ),
     // 사용자 불일치
     NOT_MATCH_USER(HttpStatus.BAD_REQUEST,"현재 로그인한 사용자와 일치하지 않습니다." ),

@@ -32,9 +32,6 @@ public interface DataMapper {
     @Mapping(source = "generalTransactionId",target = "generalTransactionId.generalTransactionId")
     GeneralTransactionImage generalImageDtoToEntity(GeneralTransactionImageDto generalTransactionImageDto);
 
-    /***
-     * entity to dto method
-     * */
     @Mapping(source = "seller.userId",target = "seller")
     @Mapping(source = "buyer.userId",target = "buyer")
     GeneralTransactionDto generalTransactionToDto(GeneralTransaction generalTransaction);
@@ -43,6 +40,7 @@ public interface DataMapper {
     GeneralTransactionImageDto generalImageEntityToDto(GeneralTransactionImage img);
 
     // Auction
+    @Mapping(source = "seller",target = "seller.userId")
     AuctionTransaction auctionTransactionFormToEntity(AuctionTransactionFormDto auctionTransactionFormDto);
 
     @Mapping(source = "auctionTransactionId",target = "auctionTransactionId.auctionTransactionId")

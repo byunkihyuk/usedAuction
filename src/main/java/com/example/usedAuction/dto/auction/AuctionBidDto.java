@@ -13,6 +13,8 @@ public class AuctionBidDto {
 
     private Integer bidder;
 
+    private String bidderNickname;
+
     private AuctionBidStateEnum auctionBidState;
 
     private Integer auctionTransactionId;

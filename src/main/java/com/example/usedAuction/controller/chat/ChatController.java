@@ -4,6 +4,7 @@ import com.example.usedAuction.dto.chat.ChattingMessageForm;
 import com.example.usedAuction.dto.chat.ChattingMessageDto;
 import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
+import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.service.chatting.ChattingService;
 import com.example.usedAuction.service.chatting.RedisPublisher;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,9 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,7 +33,9 @@ public class ChatController {
     @MessageMapping("/users")
     public void greeting(ChattingMessageDto msg) throws Exception {
         //simpMessagingTemplate.convertAndSend("/queue/"+chattingForm.getRoomId(),chattingForm);
+        // 메시지 보내기
         redisPublisher.publish(chattingService.getTopic(String.valueOf(msg.getRoomId())),msg);
+        // 메시지 DB 저장
         chattingService.sendChatting(msg);
     }
 
@@ -59,5 +64,11 @@ public class ChatController {
         result.setStatus("success");
         result.setData(messageDtoList);
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    // 채팅방 입장 - 상대방 닉네임,번호 가져오기
+    @GetMapping("/chat-receiver/{roomId}")
+    public ResponseEntity<Object> getChattingReceiver(@PathVariable Integer roomId){
+        return ResponseEntity.status(HttpStatus.OK).body(chattingService.getChattingReceiver(roomId));
     }
 }
