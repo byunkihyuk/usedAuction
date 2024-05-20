@@ -83,7 +83,11 @@ public class UserController {
     }
   
     @GetMapping(value = "/user/{userId}/auction-buy-history")
-    public ResponseEntity<Object> getUserAuctionTransactionBuyList(@PathVariable Integer userId) {
-        return userService.getUserAuctionTransactionBuyList(userId);
+    public ResponseEntity<Object> getUserAuctionTransactionBuyList(@PathVariable Integer userId,
+                                                                   @RequestParam(value = "size", required = false)Integer size,
+                                                                   @RequestParam(value = "page", required = false)Integer page,
+                                                                   @RequestParam(value = "sort", required = false)String sort) {
+        return userService.getUserAuctionTransactionBuyList(userId,size,page,sort);
     }
+
 }

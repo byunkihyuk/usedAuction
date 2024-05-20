@@ -286,7 +286,11 @@ public class UserService {
       return ResponseEntity.status(status).body(result);
    }
 
-    public ResponseEntity<Object> getUserAuctionTransactionBuyList(Integer userId) {
+    public ResponseEntity<Object> getUserAuctionTransactionBuyList(Integer userId, Integer size, Integer page, String sort) {
+        Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
+                Sort.by("createdAt").descending();
+        Pageable pageable = PageRequest.of(page,size, pageableSort);
+
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.OK;
 
@@ -302,7 +306,7 @@ public class UserService {
             return ResponseEntity.status(status).body(new ResponseResultError("fail","본인 인증 실패"));
         }
 
-        List<AuctionTransactionDto> generalTransactionDtoList = auctionTransactionRepository.findAllByBuyerOrderByCreatedAtDesc(idUser)
+        List<AuctionTransactionDto> generalTransactionDtoList = auctionTransactionRepository.findAllByBuyer(idUser,pageable)
                 .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
 
         result.setData(generalTransactionDtoList);
