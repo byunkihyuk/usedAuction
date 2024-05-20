@@ -1,11 +1,9 @@
 package com.example.usedAuction.controller.auction;
 
-import com.example.usedAuction.controller.general.GeneralTransactionController;
 import com.example.usedAuction.dto.auction.AuctionBidDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionBidFormDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionDto;
 import com.example.usedAuction.dto.auction.AuctionTransactionFormDto;
-import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.entity.TransactionImage;
 import com.example.usedAuction.entity.auction.AuctionBid;
@@ -109,5 +107,6 @@ public class AuctionTransactionController {
         List<AuctionTransactionDto> transactionList;
         int totalCount;
     }
+
 
 }
