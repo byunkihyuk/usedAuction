@@ -13,7 +13,6 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.springframework.stereotype.Component;
 
 @Configuration
-@Component
 public class RedisConfig {
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(RedisConnectionFactory connectionFactory){
@@ -21,6 +20,7 @@ public class RedisConfig {
         container.setConnectionFactory(connectionFactory);
         return container;
     }
+
 
     @Bean
     public RedisTemplate<String,Object> redisTemplate(RedisConnectionFactory connectionFactory){
@@ -31,13 +31,13 @@ public class RedisConfig {
         return redisTemplate;
     }
 
-    @Bean
-    public RedisTemplate<String, ChattingMessageDto> redisTemplateMessage(RedisConnectionFactory connectionFactory) {
-        RedisTemplate<String, ChattingMessageDto> redisTemplateMessage = new RedisTemplate<>();
-        redisTemplateMessage.setConnectionFactory(connectionFactory);
-        redisTemplateMessage.setKeySerializer(new StringRedisSerializer());        // Key Serializer
-        redisTemplateMessage.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));      // Value Serializer
-        return redisTemplateMessage;
-    }
+//    @Bean
+//    public RedisTemplate<String, ChattingMessageDto> redisTemplateMessage(RedisConnectionFactory connectionFactory) {
+//        RedisTemplate<String, ChattingMessageDto> redisTemplateMessage = new RedisTemplate<>();
+//        redisTemplateMessage.setConnectionFactory(connectionFactory);
+//        redisTemplateMessage.setKeySerializer(new StringRedisSerializer());        // Key Serializer
+//        redisTemplateMessage.setValueSerializer(new Jackson2JsonRedisSerializer<>(String.class));      // Value Serializer
+//        return redisTemplateMessage;
+//    }
 
 }
