@@ -388,6 +388,11 @@ public class AuctionTransactionService {
         auctionBidDto.setAuctionBidState(AuctionBidStateEnum.BID);
         AuctionBid auctionBid = DataMapper.instance.auctionBidDtoToEntity(auctionBidDto);
 
+        if( auctionTransaction.getHighestBid() >= auctionBidDto.getPrice()){
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","입찰 금액은 최고가보다 높아야 합니다."));
+        }
+        auctionBid.setBidder(loginUser);
+        auctionBid.setBidderNickname(loginUser.getNickname());
 
         try{
             AuctionBid resultBid = auctionBidRepository.save(auctionBid);
