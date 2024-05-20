@@ -267,14 +267,18 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
-    public ResponseEntity<Object> getUserAuctionTransactionSellList(Integer userId) {
+   public ResponseEntity<Object> getUserAuctionTransactionSellList(Integer userId, Integer size, Integer page, String sort) {
+       Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
+               Sort.by("createdAt").descending();
+       Pageable pageable = PageRequest.of(page,size, pageableSort);
+
       ResponseResult<Object> result = new ResponseResult<>();
       HttpStatus status = HttpStatus.OK;
 
       User idUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-      List<AuctionTransactionDto> auctionTransactionDtoList = auctionTransactionRepository.findAllBySellerOrderByCreatedAtDesc(idUser)
+      List<AuctionTransactionDto> auctionTransactionDtoList = auctionTransactionRepository.findAllBySeller(idUser,pageable)
               .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
      
       result.setData(auctionTransactionDtoList);
