@@ -26,6 +26,8 @@ public class AuctionBid {
     @JoinColumn(name = "bidder")
     private User bidder;
 
+    private String bidderNickname;
+
     @Column(name = "auction_bid_state")
     @Enumerated(EnumType.STRING)
     private AuctionBidStateEnum auctionBidState;
