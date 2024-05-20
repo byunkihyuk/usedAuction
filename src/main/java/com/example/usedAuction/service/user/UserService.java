@@ -11,6 +11,7 @@ import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignInFormDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.dto.user.UserUpdateForm;
+import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -20,6 +21,9 @@ import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -67,24 +71,41 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public String findByUsername(String username) {
-
+    public ResponseEntity<Object> findByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+                .orElse(null);
+
         if(user!=null){
-            return "Y";
+            ResponseResultError result = new ResponseResultError();
+            result.setStatus("fail");
+            result.setMessage("사용중인 아이디입니다.");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
         }
-        return "N";
+        ResponseResult<Object> result = new ResponseResult<>();
+        Map<String, String> data = new HashMap<>();
+        result.setStatus("success");
+        data.put("message","사용 가능합니다.");
+        result.setData(data);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @Transactional(readOnly = true)
-    public String findByNickname(String nickname) {
+    public ResponseEntity<Object> findByNickname(String nickname) {
         User user = userRepository.findByNickname(nickname)
-                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+                .orElse(null);
+
         if(user!=null){
-            return "Y";
+            ResponseResultError result = new ResponseResultError();
+            result.setStatus("fail");
+            result.setMessage("사용중인 닉네임입니다.");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
         }
-        return "N";
+        ResponseResult<Object> result = new ResponseResult<>();
+        Map<String, String> data = new HashMap<>();
+        result.setStatus("success");
+        data.put("message","사용 가능합니다.");
+        result.setData(data);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
     @Transactional(readOnly = true)
@@ -106,11 +127,13 @@ public class UserService {
         Map<String, Object> data = new HashMap<>();
         data.put("message","로그인 성공");
         data.put("token",jwt);
+        data.put("nickname",userSignInFormDto.getUsername());
 
         return ResponseEntity.status(HttpStatus.OK)
                 .headers(httpHeaders)
                 .body(new ResponseResult<>("success",data));
     }
+
 
     @Transactional(readOnly = true)
     public ResponseEntity<Object> getUserPage(Integer userId) {
@@ -120,13 +143,10 @@ public class UserService {
         // 검색한 유저 정보
         // 없으면 유저가 없는 에러
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
-
         HttpStatus httpStatus = HttpStatus.OK;
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");
         UserDto userDto = DataMapper.instance.UserEntityToDto(user);
-
         // 본인
         if (username.equals(user.getUsername())) {
             userDto.setPassword("");
@@ -184,6 +204,7 @@ public class UserService {
 
     @Transactional
     public ResponseEntity<Object> getUserGeneralTransactionList(Integer userId) {
+
         ResponseResult<Object> result = new ResponseResult<>();
         HttpStatus status = HttpStatus.OK;
         Map<String,Object> failData = new HashMap<>();
@@ -210,7 +231,6 @@ public class UserService {
 
         User idUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
-
         List<GeneralTransactionDto> generalTransactionDtoList = generalTransactionRepository.findAllBySellerOrderByCreatedAtDesc(idUser)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
 
@@ -218,14 +238,14 @@ public class UserService {
         result.setStatus("success");
         return ResponseEntity.status(status).body(result);
     }
-  
-   public ResponseEntity<Object> getUserAuctionTransactionSellList(Integer userId) {
+
+    public ResponseEntity<Object> getUserAuctionTransactionSellList(Integer userId) {
       ResponseResult<Object> result = new ResponseResult<>();
       HttpStatus status = HttpStatus.OK;
 
       User idUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
-     
+
       List<AuctionTransactionDto> auctionTransactionDtoList = auctionTransactionRepository.findAllBySellerOrderByCreatedAtDesc(idUser)
               .stream().map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
      
@@ -246,7 +266,7 @@ public class UserService {
         User idUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-        if(loginUser.getUsername()==null || !loginUser.getUsername().equals(idUser.getUsername())){
+        if(loginUser.getUsername()==null || !loginUser.getUserId().equals(idUser.getUserId())){
             return ResponseEntity.status(status).body(new ResponseResultError("fail","본인 인증 실패"));
         }
 
