@@ -32,9 +32,9 @@ public class UserController {
         return userService.findByUsername(getJson.get("username"));
     }
 
-    @PostMapping("/sign-up/nicknameCheck")
-    public String nicknameCheck(@RequestParam("nickname") String nickname){
-        return userService.findByNickname(nickname);
+    @PostMapping("/sign-up/nickname-check")
+    public ResponseEntity<Object> nicknameCheck(@RequestBody Map<String,String> getJson){
+        return userService.findByNickname(getJson.get("nickname"));
     }
 
     @PostMapping("/sign-in")
