@@ -7,6 +7,7 @@ import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.entity.chat.ChattingMessage;
 import com.example.usedAuction.entity.chat.ChattingRoom;
+import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
@@ -46,10 +47,9 @@ public class ChattingService {
     // redis
     private final RedisMessageListenerContainer redisMessageListener;
     private final RedisSubscriber redisSubscriber;
-    private final RedisPublisher redisPublisher;
 
     private static final String CHAT_ROOMS = "ROOM_INFO";
-    private final RedisTemplate<String, ChattingMessageDto> redisTemplate;
+    private final RedisTemplate<String, Object> redisTemplate;
     private HashOperations<String, String, ChattingRoomDto> opsHashChatting;
     private Map<String, ChannelTopic> topics;
 
@@ -71,6 +71,7 @@ public class ChattingService {
         topics.put(roomId,topic);
     }
 
+
     public ChannelTopic getTopic(String roomId) {
         return topics.get(roomId);
     }
@@ -78,13 +79,12 @@ public class ChattingService {
 
     @Transactional
     public List<ChattingMessageDto> postChattingRoom(GeneralTransactionDto generalTransactionDto){
-
-        String username =SecurityUtil.getCurrentUsername().orElse("");
-        User loginUser = userRepository.findByUsername(username)
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
         User receiver = userRepository.findById(generalTransactionDto.getSeller())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
 
         // DB에 채팅방이 있는지 검색
         ChattingRoom chattingRoom = chattingRepository.findBySenderAndReceiver(loginUser,receiver);
@@ -99,19 +99,17 @@ public class ChattingService {
             try {
                 createRoom = DataMapper.instance.chattingRoomEntityToDto(chattingRepository.save(chattingRoom));
                 // redis hash에 채팅방 정보 저장
-                opsHashChatting.put(CHAT_ROOMS, String.valueOf(createRoom.getRoomId()), createRoom);
+                ////opsHashChatting.put(CHAT_ROOMS, String.valueOf(createRoom.getRoomId()), createRoom);
             }catch (Exception e){
-                System.out.println("채팅방 생성 에러");
+                throw new ApiException(ErrorEnum.CHAT_ROOM_CREATE_ERROR);
             }
         }
-
-        enterRoom(String.valueOf(createRoom.getRoomId()));
 
         // 채팅하기를 누른 판매중인 상품 채팅방에 전송
         ChattingMessageDto chattingMessageDto = new ChattingMessageDto();
         chattingMessageDto.setSender(loginUser.getUserId());
-        chattingMessageDto.setContent("http://usedauction.net:8080/general/"+generalTransactionDto.getGeneralTransactionId());
-        chattingMessageDto.setRoomId(createRoom.getRoomId());
+        chattingMessageDto.setContent("https://usedauction.net/general/"+generalTransactionDto.getGeneralTransactionId());
+
         // DTO 생성 및 메세지 저장
         sendChatting(chattingMessageDto);
         // redis에도 메시지 추가
@@ -123,9 +121,7 @@ public class ChattingService {
 
     @Transactional(readOnly = true)
     public  ResponseEntity<Object>  getAllChattingRoom(){
-        String username = SecurityUtil.getCurrentUsername().orElse("");
-
-        User loginUser = userRepository.findByUsername(username)
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
         List<ChattingRoomDto> chattingList = chattingRepository.findAllBySenderOrReceiver(loginUser,loginUser)
@@ -133,6 +129,7 @@ public class ChattingService {
                 .collect(Collectors.toList());
 
         ResponseResult<Object> result = new ResponseResult<>();
+
         result.setStatus("success");
         result.setData(chattingList);
         return ResponseEntity.status(HttpStatus.OK).body(result);
@@ -144,15 +141,15 @@ public class ChattingService {
         User sender = userRepository.findById(msg.getSender())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
+        // 메시지
         ChattingMessage chattingMessage = DataMapper.instance.chattingMessageDtoToEntity(msg);
         chattingMessage.setSender(sender);
-        
+
         try{
-             ChattingMessage a = chattingMessageRepository.save(chattingMessage);
-            System.out.println(a.getCreatedAt());
+            ChattingMessage saveSendMessage = chattingMessageRepository.save(chattingMessage);
+
             // redis에도 채팅 내용 저장
             redisSaveMessage(msg);
-
         }catch (Exception e ){
             throw new ApiException(ErrorEnum.CHAT_MESSAGE_SEND_ERROR);
         }
@@ -161,7 +158,7 @@ public class ChattingService {
     public void redisSaveMessage(ChattingMessageDto msg){
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(ChattingMessageDto.class));
         redisTemplate.opsForList().rightPush(String.valueOf(msg.getRoomId()), msg);
-        redisTemplate.expire(String.valueOf(msg.getRoomId()),10, TimeUnit.MINUTES);
+        redisTemplate.expire(String.valueOf(msg.getRoomId()),5, TimeUnit.MINUTES);
     }
 
     public List<ChattingMessageDto> redisGetMessageList(String roomId, int start, int end){
@@ -170,15 +167,20 @@ public class ChattingService {
 
     public List<ChattingMessageDto> getMessageList(Integer roomId,int start) {
         // 로그인 여부 확인
-        String username = SecurityUtil.getCurrentUsername().orElse("");
-        User loginUser = userRepository.findByUsername(username)
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
+        ChattingRoomDto chattingRoomDto = null;
+
         // redis hash에 방이 있는지 확인
-        ChattingRoomDto chattingRoomDto = opsHashChatting.get(CHAT_ROOMS,String.valueOf(roomId));
+        try {
+            chattingRoomDto = opsHashChatting.get(CHAT_ROOMS, String.valueOf(roomId));
+        }catch (Exception e){
+            System.out.println("레디스 채팅방 없음");
+        }
 
         if(chattingRoomDto==null){
-            // DB에 방이 있는지 확인
+            // redis에 방이 없다면 DB에 방이 있는지 확인
             ChattingRoom chattingRoom = chattingRepository.findById(roomId)
                     .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_CHATROOM));
 
@@ -190,12 +192,12 @@ public class ChattingService {
         enterRoom(String.valueOf(roomId));
         
         // redis에 채팅내역 검색
-        List<ChattingMessageDto> messageDtoList = new ArrayList<>();// redisGetMessageList(String.valueOf(chattingRoomDto.getRoomId()),start,start+99);
+        List<ChattingMessageDto> messageDtoList =   redisGetMessageList(String.valueOf(chattingRoomDto.getRoomId()),start,start+99);
 
         // redis에 채팅 내역 없으면 DB 검색
         // DB 페이징 추가
         if(messageDtoList!=null || messageDtoList.isEmpty()){
-            Sort sort = Sort.by("createdAt").descending();
+            Sort sort = Sort.by("createdAt").ascending();
             Pageable pageable = PageRequest.of(start/100,100,sort);
             messageDtoList = chattingMessageRepository.findAllByRoomId(DataMapper.instance.chattingRoomDtoToEntity(chattingRoomDto),pageable)
                     .stream().map(DataMapper.instance::chattingMessageEntityToDto)
@@ -204,4 +206,32 @@ public class ChattingService {
 
         return messageDtoList;
     }
+
+    public Object getChattingReceiver(Integer roomId) {
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.UNAUTHORIZED_ERROR));
+        ChattingRoom chattingRoom = chattingRepository.findById(roomId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_CHATROOM));
+
+        Map<String,Object> map = new HashMap<>();
+        Map<String,Object> data = new HashMap<>();
+
+        if(chattingRoom.getSender().getUserId().equals(loginUser.getUserId())){
+            map.put("status","success");
+            data.put("receiverId",chattingRoom.getReceiver().getUserId());
+            data.put("nickname",chattingRoom.getReceiver().getNickname());
+            map.put("data",data);
+        }else if(chattingRoom.getReceiver().getUserId().equals(loginUser.getUserId())){
+            map.put("status","success");
+            data.put("receiverId",chattingRoom.getSender().getUserId());
+            data.put("nickname",chattingRoom.getSender().getNickname());
+            map.put("data",data);
+        }else{
+            map.put("status","fail");
+            map.put("message","fail");
+        }
+
+        return map;
+    }
 }
+
