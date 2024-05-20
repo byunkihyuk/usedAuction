@@ -134,7 +134,6 @@ public class UserService {
                 .body(new ResponseResult<>("success",data));
     }
 
-
     @Transactional(readOnly = true)
     public ResponseEntity<Object> getUserPage(Integer userId) {
         // 로그인한 유저정보
@@ -143,21 +142,42 @@ public class UserService {
         // 검색한 유저 정보
         // 없으면 유저가 없는 에러
         User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
         HttpStatus httpStatus = HttpStatus.OK;
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");
         UserDto userDto = DataMapper.instance.UserEntityToDto(user);
+
         // 본인
         if (username.equals(user.getUsername())) {
             userDto.setPassword("");
+            userDto.setAuthor(true);
             result.setData(userDto);
         } else { // 본인이 아님
             userDto.setPassword("");
             userDto.setAddress("");
             userDto.setDetailAddress("");
             userDto.setPhone("");
+            userDto.setAuthor(false);
             result.setData(userDto);
         }
+        return ResponseEntity.status(httpStatus).body(result);
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<Object> getUserPage() {
+
+        User user = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        HttpStatus httpStatus = HttpStatus.OK;
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        UserDto userDto = DataMapper.instance.UserEntityToDto(user);
+        userDto.setAuthor(true);
+        userDto.setPassword("");
+        result.setData(userDto);
 
         return ResponseEntity.status(httpStatus).body(result);
     }

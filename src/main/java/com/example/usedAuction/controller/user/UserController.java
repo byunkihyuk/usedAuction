@@ -43,9 +43,13 @@ public class UserController {
     }
 
 
-    @GetMapping(value = "/user/{userId}")
-    public ResponseEntity<Object> getMyPage(@PathVariable Integer userId) {
-        return userService.getUserPage(userId);
+    @GetMapping(value = "/user")
+    public ResponseEntity<Object> getMyPage(@RequestParam(value = "user-id", required = false) String userId) {
+        if(userId==null){
+            return userService.getUserPage();
+        }else{
+            return userService.getUserPage(Integer.parseInt(userId));
+        }
     }
 
     @PutMapping(value = "/user/{userId}")
