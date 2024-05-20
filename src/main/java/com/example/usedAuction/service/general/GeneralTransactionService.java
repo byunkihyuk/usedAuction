@@ -4,18 +4,18 @@ import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.general.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
+import com.example.usedAuction.dto.payment.PayInfoDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
-import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
-import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
 import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.general.GeneralTransactionImageRepository;
 import com.example.usedAuction.repository.general.GeneralTransactionRepository;
+import com.example.usedAuction.repository.payment.PayInfoRepository;
 import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.service.aws.S3UploadService;
 import com.example.usedAuction.util.SecurityUtil;
@@ -42,6 +42,7 @@ public class GeneralTransactionService {
     private final UserRepository userRepository;
     private final GeneralTransactionImageRepository generalTransactionImageRepository;
     private final S3UploadService s3UploadService;
+    private final PayInfoRepository payInfoRepository;
 
     @Transactional
     public ResponseEntity<Object> postGeneralTransaction(GeneralTransactionFormDto generalTransactionFormDto, List<MultipartFile> imageFiles) {
@@ -67,7 +68,6 @@ public class GeneralTransactionService {
             try{
                 getGeneralTransaction = generalTransactionRepository.save(generalTransaction);
             }catch (Exception e){
-                e.printStackTrace();
                 throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_POST_ERROR);
             }
             // 이미지 저장(s3 업로드) 후 결과 반환
@@ -129,11 +129,13 @@ public class GeneralTransactionService {
     }
 
 
-    public ResponseEntity<Object> getAllGeneralTransaction(Integer page, Integer size, String sort,String state) {
+    public List<GeneralTransactionDto>  getAllGeneralTransaction(Integer page, Integer size, String sort,String state) {
         Sort s = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page,size, s);
+
         List<GeneralTransactionDto> resultGeneralTransaction = new ArrayList<>();
+
         if(state.equals("전체")){
             resultGeneralTransaction = generalTransactionRepository.findAll(pageable).stream()
                     .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
@@ -143,7 +145,7 @@ public class GeneralTransactionService {
                     resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE,pageable).stream()
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
-                case "예약중":
+                case "거래중":
                     resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS,pageable).stream()
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
@@ -152,15 +154,9 @@ public class GeneralTransactionService {
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
             }
-
         }
 
-        ResponseResult<Object> result = new ResponseResult<>();
-        result.setStatus("success");
-        Map<String,Object> data = new HashMap<>();
-        data.put("data", resultGeneralTransaction);
-        result.setData(data);
-        return ResponseEntity.status(HttpStatus.OK).body(result);
+        return resultGeneralTransaction;
     }
 
     public ResponseEntity<Object> deleteGeneralTransaction(Integer generalTransactionId) {
@@ -325,7 +321,8 @@ public class GeneralTransactionService {
         generalTransaction.setContent(generalTransactionFormDto.getContent());
         generalTransaction.setPrice(generalTransactionFormDto.getPrice());
         generalTransaction.setTransactionMode(generalTransactionFormDto.getTransactionMode());
-        generalTransaction.setLocation(generalTransactionFormDto.getLocation());
+        generalTransaction.setAddress(generalTransactionFormDto.getAddress());
+        generalTransaction.setDetailAddress(generalTransactionFormDto.getDetailAddress());
         generalTransaction.setPayment(generalTransactionFormDto.getPayment());
     }
 
@@ -370,4 +367,37 @@ public class GeneralTransactionService {
         return generalTransactionRepository.findTop10ByTransactionStateNot(TransactionStateEnum.COMPLETE,sort)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
     }
+
+    public int getAllTotalCount(String state) {
+        if(state.equals("전체")){
+            return  generalTransactionRepository.findAll().size();
+        }else{
+            switch (state){
+                case "판매중":
+                    return generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE).size();
+                case "거래중":
+                    return generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS).size();
+                case "판매완료":
+                    return generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE).size();
+                default:
+                    return 0;
+            }
+        }
+
+    }
+
+    public ResponseEntity<Object> getGeneralBuyRequestList(Integer generalTransactionId) {
+        String username = SecurityUtil.getCurrentUsername().orElseThrow(()->new ApiException(ErrorEnum.UNAUTHORIZED_ERROR));
+
+        User loginUser = userRepository.findByUsername(username)
+                .orElseThrow(()-> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
+
+        List<PayInfoDto> getRequestList = payInfoRepository.findAllByGeneralTransactionId(generalTransaction)
+                .stream().map(DataMapper.instance::payInfoEntityToDto).collect(Collectors.toList());
+
+        return ResponseEntity.status(HttpStatus.OK).body(new ResponseResult<>("success",getRequestList));
+    }
 }
+
