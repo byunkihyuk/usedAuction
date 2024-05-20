@@ -23,6 +23,7 @@ public class UserDto {
     private String address;
     private String detailAddress;
     private Integer money;
+    private Boolean author;
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }
