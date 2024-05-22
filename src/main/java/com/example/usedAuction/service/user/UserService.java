@@ -378,5 +378,19 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    public ResponseEntity<Object> phoneCheck(String phone) {
+        User user = userRepository.findByPhone(phone).orElse(null);
+        ResponseResult<Object> result = new ResponseResult<>();
+        Map<String,String> map = new HashMap<>();
+        if(user==null){
+            map.put("message","사용 가능합니다.");
+            result.setStatus("success");
+            result.setData(map);
+        }else{
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","사용중인 번호입니다."));
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
 }
 

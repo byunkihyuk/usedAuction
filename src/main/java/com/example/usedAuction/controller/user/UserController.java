@@ -34,7 +34,10 @@ public class UserController {
         return userService.findByNickname(getJson.get("nickname"));
     }
 
-
+    @PostMapping("/sign-up/phone-check")
+    public ResponseEntity<Object> phoneCheck(@RequestBody Map<String,String> getJson){
+        return userService.phoneCheck(getJson.get("phone"));
+    }
 
     @PostMapping("/sign-in")
     public ResponseEntity<Object> signIn(@RequestBody UserSignInFormDto userSignInFormDto){
