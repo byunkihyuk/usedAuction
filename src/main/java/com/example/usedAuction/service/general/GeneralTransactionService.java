@@ -20,6 +20,7 @@ import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.service.aws.S3UploadService;
 import com.example.usedAuction.util.SecurityUtil;
 import com.example.usedAuction.util.ServiceUtil;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -138,7 +139,7 @@ public class GeneralTransactionService {
     }
 
 
-    public List<GeneralTransactionDto>  getAllGeneralTransaction(Integer page, Integer size, String sort,String state) {
+    public List<GeneralTransactionDto>  getAllGeneralTransaction(Integer page, Integer size, String sort,String state,String keyword) {
         Sort s = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page,size, s);
@@ -151,15 +152,15 @@ public class GeneralTransactionService {
         }else{
             switch (state){
                 case "판매중":
-                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE,pageable).stream()
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.SALE,keyword,keyword,pageable).stream()
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
                 case "거래중":
-                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS,pageable).stream()
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.PROGRESS,keyword,keyword,pageable).stream()
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
                 case "판매완료":
-                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE,pageable).stream()
+                    resultGeneralTransaction = generalTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.COMPLETE,keyword,keyword,pageable).stream()
                             .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
                     break;
             }
@@ -377,17 +378,17 @@ public class GeneralTransactionService {
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
     }
 
-    public int getAllTotalCount(String state) {
+    public int getAllTotalCount(String state,String keyword) {
         if(state.equals("전체")){
             return  generalTransactionRepository.findAll().size();
         }else{
             switch (state){
                 case "판매중":
-                    return generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE).size();
+                    return generalTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.SALE,keyword,keyword).size();
                 case "거래중":
-                    return generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS).size();
+                    return generalTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.PROGRESS,keyword,keyword).size();
                 case "판매완료":
-                    return generalTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE).size();
+                    return generalTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.COMPLETE,keyword,keyword).size();
                 default:
                     return 0;
             }
@@ -407,6 +408,12 @@ public class GeneralTransactionService {
                 .stream().map(DataMapper.instance::payInfoEntityToDto).collect(Collectors.toList());
 
         return ResponseEntity.status(HttpStatus.OK).body(new ResponseResult<>("success",getRequestList));
+    }
+
+    public List<GeneralTransactionDto> searchTopGeneralList(String keyword) {
+        Pageable pageable = PageRequest.of(0,5);
+        return generalTransactionRepository.findAllBySearch(keyword,pageable).stream()
+                .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
     }
 }
 

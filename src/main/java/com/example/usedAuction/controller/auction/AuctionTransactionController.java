@@ -45,10 +45,15 @@ public class AuctionTransactionController {
     public ResponseEntity<Object> getAllAuctionTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
                                                            @RequestParam(required = false,defaultValue = "10") Integer size,
                                                            @RequestParam(required = false,defaultValue = "asc") String sort,
-                                                           @RequestParam(required = false,defaultValue = "전체") String state){
+                                                           @RequestParam(required = false,defaultValue = "전체") String state,
+                                                           @RequestParam(required = false,defaultValue = "") String keyword){
+        String likeKeyword = "";
+        if(keyword!=null){
+            likeKeyword = keyword;
+        }
         GetAllAuctionTransactionResultDto getAllAuctionTransactionResultDto = new GetAllAuctionTransactionResultDto();
-        getAllAuctionTransactionResultDto.setTransactionList(auctionTransactionService.getAllAuctionTransaction(page,size,sort,state));
-        getAllAuctionTransactionResultDto.setTotalCount(auctionTransactionService.getAllTotalCount(state));
+        getAllAuctionTransactionResultDto.setTransactionList(auctionTransactionService.getAllAuctionTransaction(page,size,sort,state,likeKeyword));
+        getAllAuctionTransactionResultDto.setTotalCount(auctionTransactionService.getAllTotalCount(state,likeKeyword));
 
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");

@@ -37,11 +37,15 @@ public class GeneralTransactionController {
     public ResponseEntity<Object> getAllGeneralTransaction(@RequestParam(required = false,defaultValue = "0") Integer page,
                                                            @RequestParam(required = false,defaultValue = "20") Integer size,
                                                            @RequestParam(required = false,defaultValue = "asc") String sort,
-                                                           @RequestParam(required = false,defaultValue = "전체") String state){
-
+                                                           @RequestParam(required = false,defaultValue = "전체") String state,
+                                                           @RequestParam(required = false,defaultValue = "") String keyword){
+        String likeKeyword = "";
+        if(keyword!=null){
+            likeKeyword = keyword;
+        }
         GetAllGeneralTransactionResultDto getAllGeneralTransactionResultDto = new GetAllGeneralTransactionResultDto();
-        getAllGeneralTransactionResultDto.setTransactionList(generalTransactionService.getAllGeneralTransaction(page,size,sort,state));
-        getAllGeneralTransactionResultDto.setTotalCount(generalTransactionService.getAllTotalCount(state));
+        getAllGeneralTransactionResultDto.setTransactionList(generalTransactionService.getAllGeneralTransaction(page,size,sort,state,likeKeyword));
+        getAllGeneralTransactionResultDto.setTotalCount(generalTransactionService.getAllTotalCount(state,likeKeyword));
 
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");

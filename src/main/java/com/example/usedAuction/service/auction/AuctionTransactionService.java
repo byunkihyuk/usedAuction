@@ -147,7 +147,7 @@ public class AuctionTransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<AuctionTransactionDto> getAllAuctionTransaction(Integer page, Integer size, String sort,String state) {
+    public List<AuctionTransactionDto> getAllAuctionTransaction(Integer page, Integer size, String sort,String state,String keyword) {
         Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
         Pageable pageable = PageRequest.of(page,size, pageableSort);
@@ -159,15 +159,15 @@ public class AuctionTransactionService {
         }else{
             switch (state){
                 case "판매중":
-                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE,pageable).stream()
+                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.SALE,keyword,keyword,pageable).stream()
                             .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
                     break;
                 case "거래중":
-                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS,pageable).stream()
+                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.PROGRESS,keyword,keyword,pageable).stream()
                             .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
                     break;
                 case "판매완료":
-                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE,pageable).stream()
+                    resultAuctionTransaction = auctionTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.COMPLETE,keyword,keyword,pageable).stream()
                             .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
                     break;
             }
@@ -490,20 +490,26 @@ public class AuctionTransactionService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
-    public int getAllTotalCount(String state) {
+    public int getAllTotalCount(String state,String keyword) {
         if(state.equals("전체")){
             return  auctionTransactionRepository.findAll().size();
         }else{
             switch (state){
                 case "판매중":
-                    return auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.SALE).size();
+                    return auctionTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.SALE,keyword,keyword).size();
                 case "거래중":
-                    return auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.PROGRESS).size();
+                    return auctionTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.PROGRESS,keyword,keyword).size();
                 case "판매완료":
-                    return auctionTransactionRepository.findAllByTransactionState(TransactionStateEnum.COMPLETE).size();
+                    return auctionTransactionRepository.findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum.COMPLETE,keyword,keyword).size();
                 default:
                     return 0;
             }
         }
+    }
+
+    public Object searchTopAuctionList(String keyword) {
+        Pageable pageable = PageRequest.of(0,5);
+        return auctionTransactionRepository.findAllBySearch(keyword,pageable).stream()
+                .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
     }
 }

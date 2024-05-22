@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -53,6 +54,18 @@ public class HomeController {
         data.put("topList",topList);
         data.put("generalTransactionList", generalTransactionService.topGeneralList("createdAt"));
         data.put("auctionTransactionList",auctionTransactionService.topAuctionList("createdAt"));
+        result.setData(data);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @GetMapping(value = "/search")
+    public ResponseEntity<Object> getSearch(@RequestParam String keyword){
+        String keywordReg = "%"+keyword+"%";
+        Map<String,Object> data = new HashMap<>();
+        data.put("generalTransactionList",generalTransactionService.searchTopGeneralList(keywordReg));
+        data.put("auctionTransactionList",auctionTransactionService.searchTopAuctionList(keywordReg));
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
         result.setData(data);
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
