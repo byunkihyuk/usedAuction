@@ -1,9 +1,6 @@
 package com.example.usedAuction.controller.user;
 
-import com.example.usedAuction.dto.user.UserDto;
-import com.example.usedAuction.dto.user.UserSignInFormDto;
-import com.example.usedAuction.dto.user.UserSignUpFormDto;
-import com.example.usedAuction.dto.user.UserUpdateForm;
+import com.example.usedAuction.dto.user.*;
 import com.example.usedAuction.service.user.UserService;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +33,8 @@ public class UserController {
     public ResponseEntity<Object> nicknameCheck(@RequestBody Map<String,String> getJson){
         return userService.findByNickname(getJson.get("nickname"));
     }
+
+
 
     @PostMapping("/sign-in")
     public ResponseEntity<Object> signIn(@RequestBody UserSignInFormDto userSignInFormDto){
@@ -88,6 +87,16 @@ public class UserController {
                                                                    @RequestParam(value = "page", required = false)Integer page,
                                                                    @RequestParam(value = "sort", required = false)String sort) {
         return userService.getUserAuctionTransactionBuyList(userId,size,page,sort);
+    }
+
+    @PostMapping(value = "/mail-auth")
+    public ResponseEntity<Object> postMailAuth(@RequestBody MailAuthDto mailAuthDto){
+        return userService.sendMail(mailAuthDto);
+    }
+
+    @PostMapping(value = "/mail-auth-number")
+    public ResponseEntity<Object> getMailAuth(@RequestBody MailAuthDto mailAuthDto){
+        return userService.getMailAuth(mailAuthDto);
     }
 
 }

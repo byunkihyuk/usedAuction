@@ -8,6 +8,7 @@ import com.example.usedAuction.dto.general.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
 import com.example.usedAuction.dto.payment.PayInfoDto;
+import com.example.usedAuction.dto.user.MailAuthDto;
 import com.example.usedAuction.dto.user.UserDto;
 import com.example.usedAuction.dto.user.UserSignUpFormDto;
 import com.example.usedAuction.entity.auction.AuctionBid;
@@ -18,6 +19,7 @@ import com.example.usedAuction.entity.chat.ChattingRoom;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
 import com.example.usedAuction.entity.payment.PayInfo;
+import com.example.usedAuction.entity.user.MailAuth;
 import com.example.usedAuction.entity.user.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -102,5 +104,9 @@ public interface DataMapper {
     @Mapping(source = "generalTransactionId.generalTransactionId", target = "generalTransactionId")
     @Mapping(source = "auctionTransactionId.auctionTransactionId", target = "auctionTransactionId")
     PayInfoDto payInfoEntityToDto(PayInfo payInfoEntity);
+
+    MailAuth mailAuthDtoToEntity(MailAuthDto mailAuthDto);
+
+    MailAuthDto mailAuthEntityToDto(MailAuth mailAuth);
 
 }

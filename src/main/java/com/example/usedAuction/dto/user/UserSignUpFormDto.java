@@ -13,9 +13,9 @@ import javax.validation.constraints.Pattern;
 public class UserSignUpFormDto {
 
     @NotBlank(message = "아이디를 입력해주세요")
-    @Pattern(regexp = "^[a-zA-Z0-9]{4,}$",message = "영문과 숫자를 포함 4자이상 입력")
+    @Pattern(regexp = "^[a-zA-Z0-9+-\\_.]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$",message = "이메일 형식에 맞게 입력해주세요.")
     private String username;
-    @Pattern(regexp = "^[a-zA-Z0-9]{8,}$",message = "영문과 숫자를 포함 8자이상 입력")
+    @Pattern(regexp = "^[a-zA-Z0-9]{8,}$",message = "비밀번호 영문과 숫자를 포함 8자이상 입력해주세요.")
     @NotBlank(message = "비밀번호를 입력해주세요")
     private String password;
     @NotBlank(message = "닉네임을 입력해주세요")
