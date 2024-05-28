@@ -42,7 +42,8 @@ public enum ErrorEnum {
     PAYMENT_CANCEL_FAIL(HttpStatus.BAD_REQUEST,"거래 취소 실패" ),
     NOT_FOUND_PAY_INFO(HttpStatus.BAD_REQUEST,"결제 정보가 없습니다." ),
     INSUFFICIENT_MONEY(HttpStatus.BAD_REQUEST,"잔액이 부족합니다." ),
-    NOT_FOUND_BID(HttpStatus.BAD_REQUEST,"입찰 정보가 없습니다." );
+    NOT_FOUND_BID(HttpStatus.BAD_REQUEST,"입찰 정보가 없습니다." ),
+    CREATE_MAIL_SECURE_NUMBER_ERROR(HttpStatus.BAD_REQUEST,"메일 인증번호 생성 실패" );
 
     private final HttpStatus httpStatus;
     private final String message;
