@@ -110,7 +110,7 @@ public class GeneralTransactionService {
     }
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     public ResponseEntity<Object> getGeneralTransaction(Integer generalTransactionId) {
         GeneralTransaction generalTransaction = generalTransactionRepository.findByGeneralTransactionId(generalTransactionId);
         generalTransaction.setViewCount(generalTransaction.getViewCount()+1);
