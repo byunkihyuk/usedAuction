@@ -58,7 +58,7 @@ public class UserService {
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
     private String SENDER_MAIL;
-    @Value("${spring.mail.timeout}")
+    @Value("${spring.mail.properties.mail.smtp.timeout}")
     private Long MAIL_TIMEOUT;
 
 
