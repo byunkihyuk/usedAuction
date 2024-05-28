@@ -8,7 +8,7 @@ public class ChattingMessageDto {
     private Long messageId;
     private String content;
     private Integer sender;
-    //private Integer receiver;
+    private Integer receiver;
     private Integer roomId;
     private Timestamp createdAt;
 }

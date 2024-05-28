@@ -29,9 +29,9 @@ public class ChattingMessage {
     @JoinColumn(nullable = false,name = "sender")
     private User sender;
 
-//    @ManyToOne
-//    @JoinColumn(nullable = false)
-//    private User receiver;
+    @ManyToOne
+    @JoinColumn(nullable = false,name = "receiver")
+    private User receiver;
 
     @Column(name = "created_at")
     @CreatedDate
