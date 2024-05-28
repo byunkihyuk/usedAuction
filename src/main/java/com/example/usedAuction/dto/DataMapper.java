@@ -84,11 +84,12 @@ public interface DataMapper {
 
     @Mapping(source = "roomId.roomId", target = "roomId")
     @Mapping(source = "sender.userId", target = "sender")
-    //@Mapping(source = "receiver.userId", target = "receiver")
+    @Mapping(source = "receiver.userId", target = "receiver")
     ChattingMessageDto chattingMessageEntityToDto(ChattingMessage message);
 
     @Mapping(source = "roomId", target = "roomId.roomId")
     @Mapping(source = "sender", target = "sender.userId")
+    @Mapping(source = "receiver", target = "receiver.userId")
     ChattingMessage chattingMessageDtoToEntity(ChattingMessageDto msg);
 
     @Mapping(source = "seller", target = "seller.userId")
