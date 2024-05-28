@@ -52,6 +52,7 @@ public class ChattingService {
     //private final RedisTemplate<String, Object> redisTemplate;
     ////private HashOperations<String, String, ChattingRoomDto> opsHashChatting;
     private Map<String, ChannelTopic> topics;
+    private final Integer CHAT_COUNT=50;
 
     // 의존성 주입이 완료된 후 실행되어야하는 method에 사용
     // 생성자보다 늦게 호출
@@ -126,6 +127,7 @@ public class ChattingService {
         }else{
             chattingRoom.setProductThumbnail(generalTransaction.getThumbnail());
         }
+
         if(createRoom==null){
             enterRoom(String.valueOf(chattingRoom.getRoomId()));
         }else{
@@ -135,6 +137,7 @@ public class ChattingService {
         // 채팅하기를 누른 판매중인 상품 채팅방에 전송
         ChattingMessageDto chattingMessageDto = new ChattingMessageDto();
         chattingMessageDto.setSender(loginUser.getUserId());
+        chattingMessageDto.setReceiver(generalTransactionDto.getSeller());
         chattingMessageDto.setContent("https://usedauction.net/general/"+generalTransactionDto.getGeneralTransactionId());
         if(createRoom==null){
             chattingMessageDto.setRoomId(chattingRoom.getRoomId());
@@ -155,7 +158,7 @@ public class ChattingService {
         User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-        List<ChattingRoomDto> chattingList = chattingRepository.findAllBySenderOrReceiver(loginUser,loginUser)
+        List<ChattingRoomDto> chattingList = chattingRepository.findAllBySenderOrReceiverOrderByMessageCreatedAtDesc(loginUser,loginUser)
                 .stream().map(DataMapper.instance::chattingRoomEntityToDto)
                 .collect(Collectors.toList());
 
@@ -174,9 +177,13 @@ public class ChattingService {
         User sender = userRepository.findById(msg.getSender())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
+        User receiver = userRepository.findById(msg.getReceiver())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
         // 메시지
         ChattingMessage chattingMessage = DataMapper.instance.chattingMessageDtoToEntity(msg);
         chattingMessage.setSender(sender);
+        chattingMessage.setReceiver(receiver);
         ChattingRoom chattingRoom = chattingRepository.findById(msg.getRoomId())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_CHATROOM));
 
@@ -234,12 +241,12 @@ public class ChattingService {
         // DB 페이징 추가
 //        if(messageDtoList!=null || messageDtoList.isEmpty()){
             Sort sort = Sort.by("createdAt").ascending();
-            Pageable pageable = PageRequest.of(start/100,100,sort);
-            messageDtoList = chattingMessageRepository.findAllByRoomId(chattingRoom,pageable)
+            Pageable pageable = PageRequest.of(start/CHAT_COUNT,CHAT_COUNT,sort);
+            messageDtoList = chattingMessageRepository.findAllByRoomIdOrderByCreatedAtDesc(chattingRoom,pageable)
                     .stream().map(DataMapper.instance::chattingMessageEntityToDto)
                     .collect(Collectors.toList());
 //        }
-
+        Collections.reverse(messageDtoList);
         return messageDtoList;
     }
 

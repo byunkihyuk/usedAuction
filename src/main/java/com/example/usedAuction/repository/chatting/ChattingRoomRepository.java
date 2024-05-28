@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface ChattingRoomRepository extends JpaRepository<ChattingRoom,Integer> {
-    List<ChattingRoom> findAllBySenderOrReceiver(User sender,User receiver);
+    List<ChattingRoom> findAllBySenderOrReceiverOrderByMessageCreatedAtDesc(User sender,User receiver);
 
     ChattingRoom findBySenderAndReceiver(User loginUser, User receiver);
 

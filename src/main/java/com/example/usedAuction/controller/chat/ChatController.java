@@ -57,7 +57,8 @@ public class ChatController {
     
     // 채팅방 입장 - 채팅 내용 가져오기
     @GetMapping("/chat/{roomId}")
-    public ResponseEntity<Object> getChatting(@PathVariable Integer roomId,@RequestParam(required = false, defaultValue = "0") int start){
+    public ResponseEntity<Object> getChatting(@PathVariable Integer roomId,@RequestParam(value = "start", required = false, defaultValue = "0") int start){
+        System.out.println(start/50);
         List<ChattingMessageDto> messageDtoList = chattingService.getMessageList(roomId,start);
 
         ResponseResult<Object> result = new ResponseResult<>();
