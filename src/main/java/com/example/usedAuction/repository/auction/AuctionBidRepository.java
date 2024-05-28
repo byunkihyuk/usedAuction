@@ -21,4 +21,6 @@ public interface AuctionBidRepository extends JpaRepository<AuctionBid, Integer>
     AuctionBid findTopByAuctionTransactionIdOrderByPriceDesc(AuctionTransaction auctionTransaction);
 
     List<AuctionBid> findAllByAuctionTransactionIdOrderByPriceDesc(AuctionTransaction auctionTransaction);
+
+    Optional<AuctionBid> findFirstByAuctionTransactionIdOrderByPriceDesc(AuctionTransaction auctionTransactionId);
 }

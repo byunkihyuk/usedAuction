@@ -86,6 +86,12 @@ public class AuctionTransactionController {
         return auctionTransactionService.updateAuctionTransactionBid(auctionBidDto);
     }
 
+    // 최고가 갱신
+    @GetMapping(value = "/auction/{auctionTransactionId}/highest-bid")
+    public ResponseEntity<Object> getAuctionTransactionHighestBid(@PathVariable Integer auctionTransactionId){
+        return auctionTransactionService.getAuctionTransactionHighestBid(auctionTransactionId);
+    }
+    
     // 글 관련 전체
     @GetMapping(value = "/auction/{auctionTransactionId}/bid/all")
     public ResponseEntity<Object> getAllAuctionBid(@PathVariable Integer auctionTransactionId){

@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/api/user/*/general-sell-history").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/user/*/auction-sell-history").permitAll()
                         .antMatchers(HttpMethod.GET, "/chatting").permitAll()
+                        .antMatchers(HttpMethod.GET, "/api/auction/*/highest-bid").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/auction/*/subscribe").permitAll()
                         .anyRequest().authenticated()
                 )

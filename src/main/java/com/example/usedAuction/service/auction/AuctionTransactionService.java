@@ -1,6 +1,5 @@
 package com.example.usedAuction.service.auction;
 
-import com.amazonaws.internal.http.ErrorCodeParser;
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.auction.*;
 import com.example.usedAuction.dto.result.ResponseResult;
@@ -9,8 +8,6 @@ import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.transactionenum.AuctionBidStateEnum;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.auction.AuctionTransactionImage;
-import com.example.usedAuction.entity.transactionenum.TransactionModeEnum;
-import com.example.usedAuction.entity.transactionenum.TransactionPaymentEnum;
 import com.example.usedAuction.entity.transactionenum.TransactionStateEnum;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
@@ -20,6 +17,7 @@ import com.example.usedAuction.repository.auction.AuctionTransactionImageReposit
 import com.example.usedAuction.repository.auction.AuctionTransactionRepository;
 import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.service.aws.S3UploadService;
+import com.example.usedAuction.service.see.SseService;
 import com.example.usedAuction.util.SecurityUtil;
 import com.example.usedAuction.util.ServiceUtil;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +42,7 @@ public class AuctionTransactionService {
     private final AuctionTransactionImageRepository auctionTransactionImageRepository;
     private final AuctionBidRepository auctionBidRepository;
     private final S3UploadService s3UploadService;
+    private final SseService sseService;
 
     @Transactional
     public ResponseEntity<Object> postAuctionTransaction(AuctionTransactionFormDto auctionTransactionFormDto, List<MultipartFile> multipartFileList) {
@@ -101,7 +100,8 @@ public class AuctionTransactionService {
                         .map(DataMapper.instance::auctionImageEntityToDto)
                         .collect(Collectors.toList());
             }catch (Exception e ){
-                throw  new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
+                e.printStackTrace();
+                throw new ApiException(ErrorEnum.IMAGE_UPLOAD_ERROR);
             }
             AuctionTransactionDto resultGeneralTransactionDto = DataMapper.instance.auctionTransactionToDto(getAuctionTransaction);
             resultGeneralTransactionDto.setImages(resultImageList);
@@ -398,6 +398,12 @@ public class AuctionTransactionService {
             AuctionBid resultBid = auctionBidRepository.save(auctionBid);
             result.setData(DataMapper.instance.auctionBidEntityToDto(resultBid));
             auctionTransaction.setHighestBid((resultBid.getPrice()));
+
+//            if(seeService.emtMap.containsKey(String.valueOf(auctionBidDto.getAuctionTransactionId()))){
+//                System.out.println("see 값 전달");
+//                seeService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),resultBid.getPrice());
+//            }
+
         }catch (Exception e){
             throw new ApiException(ErrorEnum.FAIL_BID);
         }
@@ -423,6 +429,10 @@ public class AuctionTransactionService {
             auctionBid.setAuctionBidState(AuctionBidStateEnum.BID);
             if(auctionTransaction.getHighestBid() < auctionBid.getPrice()) {
                 auctionTransaction.setHighestBid(auctionBid.getPrice());
+//                if(seeService.emtMap.containsKey(String.valueOf(auctionBidDto.getAuctionTransactionId()))){
+//                    System.out.println("see 값 수정");
+//                    seeService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),auctionBid.getPrice());
+//                }
             }
         }catch (Exception e ){
             throw new ApiException(ErrorEnum.FAIL_BID);
@@ -452,6 +462,7 @@ public class AuctionTransactionService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getAllAuctionTransactionBid(Integer auctionTransactionId) {
         String username = SecurityUtil.getCurrentUsername().orElse("");
 
@@ -471,6 +482,7 @@ public class AuctionTransactionService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getAuctionTransactionBid(Integer auctionTransactionId) {
         String username = SecurityUtil.getCurrentUsername().orElse("");
 
@@ -490,6 +502,7 @@ public class AuctionTransactionService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+    @Transactional(readOnly = true)
     public int getAllTotalCount(String state,String keyword) {
         if(state.equals("전체")){
             return  auctionTransactionRepository.findAll().size();
@@ -507,9 +520,27 @@ public class AuctionTransactionService {
         }
     }
 
+    @Transactional(readOnly = true)
     public Object searchTopAuctionList(String keyword) {
         Pageable pageable = PageRequest.of(0,5);
         return auctionTransactionRepository.findAllBySearch(keyword,pageable).stream()
                 .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public ResponseEntity<Object> getAuctionTransactionHighestBid(Integer auctionTransactionId) {
+        AuctionTransaction auctionTransaction = auctionTransactionRepository.findById(auctionTransactionId)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
+
+        AuctionBidDto auctionBidDto = DataMapper.instance.auctionBidEntityToDto(auctionBidRepository.findFirstByAuctionTransactionIdOrderByPriceDesc(auctionTransaction)
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION)));
+
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        Map<String,Object> map = new HashMap<>();
+        map.put("highestBid",auctionBidDto.getPrice());
+        result.setData(map);
+
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
