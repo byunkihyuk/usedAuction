@@ -8,14 +8,11 @@ import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
 import com.example.usedAuction.dto.user.*;
-import com.example.usedAuction.entity.general.GeneralTransaction;
-import com.example.usedAuction.entity.user.MailAuth;
 import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.auction.AuctionTransactionRepository;
 import com.example.usedAuction.repository.general.GeneralTransactionRepository;
-import com.example.usedAuction.repository.user.MailAuthRepository;
 import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,12 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.MailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMailMessage;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -39,9 +35,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.mail.internet.MimeMessage;
+import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,11 +54,16 @@ public class UserService {
     private final AuctionTransactionRepository auctionTransactionRepository;
     @Autowired
     private final UserRepository userRepository;
-    private final MailAuthRepository mailAuthRepository;
 
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
-    private String senderEmail;
+    private String SENDER_MAIL;
+    @Value("${spring.mail.timeout}")
+    private Long MAIL_TIMEOUT;
+
+
+    // redis
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Transactional
     public ResponseEntity<Object> signUp( UserSignUpFormDto userSignUpFormDto) {
@@ -230,7 +234,7 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getUserGeneralTransactionBuyList(Integer userId, Integer size, Integer page, String sort) {
         Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
@@ -256,6 +260,7 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getUserGeneralTransactionSellList(Integer userId, Integer size, Integer page, String sort) {
         Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
@@ -275,6 +280,7 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
+    @Transactional(readOnly = true)
    public ResponseEntity<Object> getUserAuctionTransactionSellList(Integer userId, Integer size, Integer page, String sort) {
        Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                Sort.by("createdAt").descending();
@@ -294,6 +300,7 @@ public class UserService {
       return ResponseEntity.status(status).body(result);
    }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<Object> getUserAuctionTransactionBuyList(Integer userId, Integer size, Integer page, String sort) {
         Sort pageableSort = sort.equals("asc") ? Sort.by("createdAt").ascending()  :
                 Sort.by("createdAt").descending();
@@ -323,31 +330,50 @@ public class UserService {
         return ResponseEntity.status(status).body(result);
     }
 
-    public int createNumber(){
-        return (int)(Math.random() * (90000)) + 100000;
+    public String createNumber(){
+        StringBuilder sb = new StringBuilder();
+        try{
+            Random random = SecureRandom.getInstanceStrong();
+            for(int i=0; i<6; i++){
+                sb.append(random.nextInt(10));
+            }
+        }catch (Exception e ){
+            throw new ApiException(ErrorEnum.CREATE_MAIL_SECURE_NUMBER_ERROR);
+        }
+        return sb.toString();
     }
 
+    @Transactional
     public ResponseEntity<Object> sendMail(MailAuthDto mailAuthDto){
+        User user = userRepository.findByUsername(mailAuthDto.getMail())
+                        .orElse(null);
+
+        if(user!=null){
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","사용중인 아이디입니다."));
+        }
 
         mailAuthDto.setNumber(String.valueOf(createNumber()));
 
-        MailAuth mailAuth = mailAuthRepository.save(DataMapper.instance.mailAuthDtoToEntity(mailAuthDto));
-
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+
         try{
-            mimeMessage.setFrom(senderEmail);
-            mimeMessage.setRecipients(MimeMessage.RecipientType.TO, mailAuth.getMail());
+            mimeMessage.setFrom(SENDER_MAIL);
+            mimeMessage.setRecipients(MimeMessage.RecipientType.TO, mailAuthDto.getMail());
             mimeMessage.setSubject("usedAuction 이메일 인증");
             String body = "<h2>usedAuction 이메일 인증번호 입니다.</h2>" +
-                    "<h1>"+mailAuth.getNumber()+"</h1>";
+                    "<h1>"+mailAuthDto.getNumber()+"</h1>";
             mimeMessage.setText(body,"UTF-8","html");
+            stringRedisTemplate.opsForValue()
+                    .set(mailAuthDto.getMail(),mailAuthDto.getNumber(), Duration.ofSeconds(MAIL_TIMEOUT));
             javaMailSender.send(mimeMessage);
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","인증 메일 발송 실패"));
         }
 
         ResponseResult<Object> result = new ResponseResult<>();
-        result.setData(mailAuth.getMailAuthId());
+        Map<String,String> map = new HashMap<>();
+        map.put("data","인증 메일 전송 성공");
+        result.setData(map);
         result.setStatus("success");
 
         return ResponseEntity.status(HttpStatus.OK).body(result);
@@ -355,14 +381,11 @@ public class UserService {
 
     public ResponseEntity<Object> getMailAuth(MailAuthDto mailAuthDto) {
 
-        MailAuth mailAuth = mailAuthRepository.findById(mailAuthDto.getMailAuthId())
-                .orElse(null);
-
         ResponseResult<Object> result = new ResponseResult<>();
         Map<String,Object> map = new HashMap<>();
-
-        if(mailAuth!=null){
-            if(mailAuth.getNumber().equals(mailAuthDto.getNumber())){
+        String authNumber = stringRedisTemplate.opsForValue().get(mailAuthDto.getMail());
+        if(authNumber!=null){
+            if(mailAuthDto.getNumber().equals(authNumber)){
                 map.put("auth",true);
                 result.setStatus("success");
             }else{
@@ -370,8 +393,7 @@ public class UserService {
                 result.setStatus("success");
             }
         }else{
-            map.put("auth",false);
-            result.setStatus("success");
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","인증 시간이 초과되었습니다."));
         }
         result.setData(map);
 
