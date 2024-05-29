@@ -7,12 +7,15 @@ import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.repository.user.UserRepository;
 import com.example.usedAuction.service.chatting.ChattingService;
 import com.example.usedAuction.service.chatting.RedisPublisher;
+import com.example.usedAuction.service.see.SseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,7 +28,7 @@ public class ChatController {
 
     private final SimpMessagingTemplate simpMessagingTemplate;
     private final ChattingService chattingService;
-
+    private final SseService sseService;
     // redis
     private final RedisPublisher redisPublisher;
 
@@ -71,5 +74,10 @@ public class ChatController {
     @GetMapping("/chat-receiver/{roomId}")
     public ResponseEntity<Object> getChattingReceiver(@PathVariable Integer roomId){
         return ResponseEntity.status(HttpStatus.OK).body(chattingService.getChattingReceiver(roomId));
+    }
+
+    @GetMapping(value = "/chat",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public ResponseEntity<SseEmitter> chatSubscriber(@RequestParam(value = "user-id") String userId){
+        return sseService.chatSubscribe(userId);
     }
 }
