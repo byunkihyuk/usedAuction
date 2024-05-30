@@ -27,6 +27,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 
+	// spring-doc
+	implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.7.0'
+
 	// redis
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
 

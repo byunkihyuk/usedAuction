@@ -28,7 +28,9 @@ public interface DataMapper {
     DataMapper instance = Mappers.getMapper(DataMapper.class);
 
     User userToEntity(UserSignUpFormDto userSignUpFormDto);
+
     GeneralTransaction generalTransactionFormToEntity(GeneralTransactionFormDto generalTransactionFormDto);
+
     @Mapping(source = "generalTransactionId",target = "generalTransactionId.generalTransactionId")
     GeneralTransactionImage generalImageDtoToEntity(GeneralTransactionImageDto generalTransactionImageDto);
 

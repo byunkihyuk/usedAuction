@@ -65,6 +65,8 @@ public class SecurityConfig {
                         .antMatchers(HttpMethod.GET, "/chatting").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/auction/*/highest-bid").permitAll()
                         .antMatchers(HttpMethod.GET, "/api/auction/*/subscribe").permitAll()
+                        .antMatchers(HttpMethod.GET, "/swagger-ui/*").permitAll()
+                        .antMatchers(HttpMethod.GET, "/usedauction/api-docs").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
