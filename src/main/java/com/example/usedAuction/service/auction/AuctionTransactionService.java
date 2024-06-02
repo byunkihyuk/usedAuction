@@ -398,11 +398,7 @@ public class AuctionTransactionService {
             AuctionBid resultBid = auctionBidRepository.save(auctionBid);
             result.setData(DataMapper.instance.auctionBidEntityToDto(resultBid));
             auctionTransaction.setHighestBid((resultBid.getPrice()));
-
-//            if(seeService.emtMap.containsKey(String.valueOf(auctionBidDto.getAuctionTransactionId()))){
-//                System.out.println("see 값 전달");
-//                seeService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),resultBid.getPrice());
-//            }
+            sseService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),resultBid.getPrice());
 
         }catch (Exception e){
             throw new ApiException(ErrorEnum.FAIL_BID);
@@ -429,10 +425,7 @@ public class AuctionTransactionService {
             auctionBid.setAuctionBidState(AuctionBidStateEnum.BID);
             if(auctionTransaction.getHighestBid() < auctionBid.getPrice()) {
                 auctionTransaction.setHighestBid(auctionBid.getPrice());
-//                if(seeService.emtMap.containsKey(String.valueOf(auctionBidDto.getAuctionTransactionId()))){
-//                    System.out.println("see 값 수정");
-//                    seeService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),auctionBid.getPrice());
-//                }
+                sseService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),auctionBid.getPrice());
             }
         }catch (Exception e ){
             throw new ApiException(ErrorEnum.FAIL_BID);
@@ -533,7 +526,7 @@ public class AuctionTransactionService {
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION));
 
         AuctionBidDto auctionBidDto = DataMapper.instance.auctionBidEntityToDto(auctionBidRepository.findFirstByAuctionTransactionIdOrderByPriceDesc(auctionTransaction)
-                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_AUCTION_TRANSACTION)));
+                .orElse(new AuctionBid()));
 
         ResponseResult<Object> result = new ResponseResult<>();
         result.setStatus("success");

@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -121,8 +123,11 @@ public class AuctionTransactionController {
     // 최고가 갱신
     @Operation(summary = "경매 글 입찰 최고가 갱신 API",description = "경매 글 입찰 최고가 갱신")
     @GetMapping(value = "/auction/{auctionTransactionId}/highest-bid")
-    public ResponseEntity<Object> getAuctionTransactionHighestBid(@PathVariable Integer auctionTransactionId){
-        return auctionTransactionService.getAuctionTransactionHighestBid(auctionTransactionId);
+    public ResponseEntity<SseEmitter> getAuctionTransactionHighestBid(@PathVariable Integer auctionTransactionId, HttpServletRequest request){
+        HttpSession session = request.getSession();
+        System.out.println(session.getId());
+        return sseService.auctionTransactionSubscribe(String.valueOf(session.getId()),String.valueOf(auctionTransactionId));
+        //return auctionTransactionService.getAuctionTransactionHighestBid(auctionTransactionId);
     }
     
     // 글 관련 전체
