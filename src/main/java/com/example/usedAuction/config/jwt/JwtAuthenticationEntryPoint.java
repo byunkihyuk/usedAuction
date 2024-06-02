@@ -28,11 +28,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
       response.setContentType("text/html;charset=utf8;");
 
       if(authException instanceof BadCredentialsException){
-         Map<String,Object> map = new HashMap<>();
-         Map<String,Object> data = new HashMap<>();
-         data.put("message", ErrorEnum.SIGN_IN_ERROR.getMessage());
-         map.put("data",data);
-         ResponseResult<Object> responseResult = new ResponseResult<>("fail",map);
+         ResponseResultError responseResult = new ResponseResultError("fail",ErrorEnum.SIGN_IN_ERROR.getMessage());
          response.setStatus(HttpStatus.BAD_REQUEST.value());
          response.getWriter().write(objectMapper.writeValueAsString(responseResult));
       }else{
