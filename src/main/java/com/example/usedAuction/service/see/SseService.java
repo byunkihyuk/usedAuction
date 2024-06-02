@@ -14,16 +14,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @RequiredArgsConstructor
 public class SseService {
     //private final List<Map<String, SseEmitter>> seeList = new ArrayList<>();
-    private final Map<String, SseEmitter> auctionEmt = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, SseEmitter>> auctionEmt = new ConcurrentHashMap<>();
     private final Map<String, SseEmitter> chatEmt = new ConcurrentHashMap<>();
-    private static final long TIMEOUT = 1800000L;
+    private static final long TIMEOUT = 3600000L;
     private static final long RECONNECTION_TIMEOUT = 1000L;
     private final ChattingRoomRepository chattingRoomRepository;
     private final ObjectMapper mapper = new ObjectMapper();
@@ -115,18 +117,24 @@ public class SseService {
                 .reconnectTime(RECONNECTION_TIMEOUT); // 재연결 대기시작
     }
 
-    public ResponseEntity<SseEmitter> auctionTransactionSubscribe(String auctionTransactionId) {
+    public ResponseEntity<SseEmitter> auctionTransactionSubscribe(String sessionId, String auctionTransactionId) {
 
         if(auctionEmt.containsKey(auctionTransactionId)){
-            return ResponseEntity.ok( auctionEmt.get(auctionTransactionId));
+            if(auctionEmt.get(auctionTransactionId).containsKey(sessionId)){
+                return ResponseEntity.ok( auctionEmt.get(auctionTransactionId).get(sessionId));
+            }
         }
 
         SseEmitter emitter = createAuctionSeeEmitter(auctionTransactionId);
-
-        auctionEmt.put(auctionTransactionId, emitter);
+        Map<String,SseEmitter> getEmt = auctionEmt.get(auctionTransactionId);
+        if(getEmt==null){
+            getEmt = new ConcurrentHashMap<>();
+        }
+        getEmt.put(sessionId,emitter);
+        auctionEmt.put(auctionTransactionId, getEmt);
 
         try {
-            emitter.send(sseAuctionEventBuilder("subscribe",auctionTransactionId,"Subscribed successfully.")); //503 방지를위한 더미데이터
+            emitter.send(sseAuctionEventBuilder("auctionBid",auctionTransactionId,"Subscribed successfully.")); //503 방지를위한 더미데이터
         } catch (IOException e) {
             System.out.println("sse 구독 에러 : , "+ e.getMessage());
         }
@@ -159,13 +167,19 @@ public class SseService {
 
     public void auctionPublish(String auctionTransactionId,Integer price) {
 
-        SseEmitter emitter = auctionEmt.get(auctionTransactionId);
-        if (emitter != null) {
-            try {
-                emitter.send(sseAuctionEventBuilder("auctionBid",auctionTransactionId,String.valueOf(price)));
-                System.out.println("배달이요");
-            } catch (IOException e) {
-                System.out.println("에러 : "+ e.getMessage());
+        Map<String,SseEmitter> getEmt = auctionEmt.get(auctionTransactionId);
+        Set<String> keyList = getEmt.keySet();
+        System.out.println(keyList.size());
+        for(String key : keyList){
+            SseEmitter emitter = getEmt.get(key);
+            if (emitter != null) {
+                try {
+                    emitter.send(sseAuctionEventBuilder("auctionBid",auctionTransactionId,String.valueOf(price)));
+                } catch (IOException e) {
+                    System.out.println("에러 : "+ e.getMessage());
+                    System.out.println("삭제");
+                    getEmt.remove(key);
+                }
             }
         }
     }
