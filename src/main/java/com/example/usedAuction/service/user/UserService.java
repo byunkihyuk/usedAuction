@@ -135,11 +135,13 @@ public class UserService {
         // 헤더에 토큰 추가
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+        UserDto userDto = DataMapper.instance.UserEntityToDto(userRepository.findByUsername(userSignInFormDto.getUsername())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER)));
 
         Map<String, Object> data = new HashMap<>();
         data.put("message","로그인 성공");
         data.put("token",jwt);
-        data.put("nickname",userSignInFormDto.getUsername());
+        data.put("nickname",userDto.getNickname());
 
         return ResponseEntity.status(HttpStatus.OK)
                 .headers(httpHeaders)
