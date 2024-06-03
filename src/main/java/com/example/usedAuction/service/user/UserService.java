@@ -227,7 +227,7 @@ public class UserService {
         try{
             loginUser.setNickname(userUpdateForm.getNickname());
             if(userUpdateForm.getChangePassword()!=null && !userUpdateForm.getChangePassword().isEmpty()){
-                loginUser.setPassword(userUpdateForm.getChangePassword());
+                loginUser.setPassword(passwordEncoder.encode(userUpdateForm.getChangePassword()));
             }
             loginUser.setAddress(userUpdateForm.getAddress());
             loginUser.setDetailAddress(userUpdateForm.getDetailAddress());
@@ -454,11 +454,9 @@ public class UserService {
             result.put("status","fail");
             return ResponseEntity.status(HttpStatus.OK).body(result);
         }
-        System.out.println("전송");
         MimeMessage mimeMessage = javaMailSender.createMimeMessage();
 
         String temporary = createPassword();
-        System.out.println(temporary);
         try{
             mimeMessage.setFrom(SENDER_MAIL);
             mimeMessage.setRecipients(MimeMessage.RecipientType.TO, username);
@@ -470,7 +468,6 @@ public class UserService {
 
             user.setPassword(passwordEncoder.encode(temporary));
         }catch (Exception e){
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","임시 비밀번호 발송 실패."));
         }
         result.put("message","임시 비밀번호 전송 완료.");
