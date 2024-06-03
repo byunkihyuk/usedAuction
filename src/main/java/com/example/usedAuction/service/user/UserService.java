@@ -58,7 +58,8 @@ public class UserService {
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
     private String SENDER_MAIL;
-    private Long MAIL_TIMEOUT = 300L;
+    @Value("${spring.mail.auth-timeout}")
+    private Long MAIL_TIMEOUT;
 
 
     // redis
