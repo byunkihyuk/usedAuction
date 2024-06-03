@@ -202,9 +202,7 @@ public class UserService {
         HttpStatus status = HttpStatus.OK;
         Map<String,Object> failData = new HashMap<>();
 
-        String username = SecurityUtil.getCurrentUsername().orElse("");
-
-        User loginUser = userRepository.findByUsername(username)
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
         User idUser = userRepository.findById(userId)
                 .orElseThrow(() -> new ApiException(ErrorEnum.NOT_FOUND_USER));
@@ -224,15 +222,23 @@ public class UserService {
             failData.put("message","현재 비밀번호가 일치하지 않습니다.");
             result.setData(failData);
             return ResponseEntity.status(status).body(result);
-        }else{
+        }
+        try{
+            loginUser.setNickname(userUpdateForm.getNickname());
+            if(userUpdateForm.getChangePassword()!=null && !userUpdateForm.getChangePassword().isEmpty()){
+                loginUser.setPassword(userUpdateForm.getChangePassword());
+            }
             loginUser.setAddress(userUpdateForm.getAddress());
             loginUser.setDetailAddress(userUpdateForm.getDetailAddress());
-            loginUser.setNickname(userUpdateForm.getNickname());
+
             UserDto resultUser =DataMapper.instance.UserEntityToDto(loginUser);
             resultUser.setPassword("");
             result.setData(resultUser);
             result.setStatus("success");
+        }catch (Exception e){
+            throw new ApiException(ErrorEnum.USER_UPDATE_ERROR);
         }
+
         return ResponseEntity.status(status).body(result);
     }
 

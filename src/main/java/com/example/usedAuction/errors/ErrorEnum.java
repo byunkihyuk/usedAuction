@@ -12,6 +12,8 @@ public enum ErrorEnum {
     SIGN_IN_ERROR(HttpStatus.UNAUTHORIZED,"없는 이메일이거나 비밀번호가 틀렸습니다"),
     FORBIDDEN_ERROR(HttpStatus.FORBIDDEN,"권한이 없습니다"),
     UNAUTHORIZED_ERROR(HttpStatus.UNAUTHORIZED,"로그인하지 않았거나 유효하지 않은 토큰입니다"),
+    // 회원 정보 수정
+    USER_UPDATE_ERROR(HttpStatus.BAD_REQUEST,"회원 정보 수정 에러" ),
     // 일반 거래 글
     GENERAL_TRANSACTION_POST_ERROR(HttpStatus.BAD_REQUEST,"일반 거래글 등록 에러"),
     NOT_FOUND_GENERAL_TRANSACTION(HttpStatus.BAD_REQUEST,"없는 일반 거래 글 입니다."),
