@@ -52,7 +52,7 @@ public class UserController {
     }
 
 
-    @Operation(summary = "로그인 사용자 마이페이지 조회 API (JWT 토큰 필요)",description = "로그인 사용자 마이페이지 조회")
+    @Operation(summary = "사용자 마이페이지 조회 API (JWT 토큰 필요)",description = "사용자 마이페이지 조회")
     @GetMapping(value = "/user")
     public ResponseEntity<Object> getMyPage(@RequestParam(value = "user-id", required = false) String userId) {
         if(userId==null){
@@ -62,7 +62,7 @@ public class UserController {
         }
     }
 
-    @Operation(summary = "다른 사용자 마이페이지 조회 API",description = "다른 사용자 마이페이지 조회")
+    @Operation(summary = "사용자 정보 업데이트 API",description = "사용자 정보 업데이트")
     @PutMapping(value = "/user/{userId}")
     public ResponseEntity<Object> updateUser(@PathVariable Integer userId, @RequestBody @Valid UserUpdateForm userUpdateForm){
         return userService.updateUser(userId,userUpdateForm);
@@ -114,6 +114,12 @@ public class UserController {
     @PostMapping(value = "/mail-auth-number")
     public ResponseEntity<Object> getMailAuth(@RequestBody MailAuthDto mailAuthDto){
         return userService.getMailAuth(mailAuthDto);
+    }
+
+    @Operation(summary = "비밀번호 찾기 API",description = "비밀번호 찾기 임시 비밀번호 발급")
+    @PostMapping("/find-password")
+    public ResponseEntity<Object> findPassword(@RequestBody Map<String,String> map){
+        return userService.findPassword(map.get("username"));
     }
 
 }

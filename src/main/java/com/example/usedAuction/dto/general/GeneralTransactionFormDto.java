@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 
 @Data
 @AllArgsConstructor
@@ -19,7 +20,7 @@ public class GeneralTransactionFormDto {
     private String title;
     @Schema(description = "내용")
     private String content;
-    @NotBlank(message = "가격을 입력하세요.")
+    @NotNull(message = "가격을 입력하세요.")
     @Schema(description = "가격")
     private Integer price;
     @Schema(description = "거래 방식",allowableValues = {"온라인","직거래"})

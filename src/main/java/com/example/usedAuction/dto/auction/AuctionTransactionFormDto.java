@@ -21,12 +21,12 @@ public class AuctionTransactionFormDto {
     @Schema(description = "글 내용")
     private String content;
     @Schema(description = "가격")
-    @NotBlank(message = "가격을 입력하세요.")
+    @NotNull(message = "가격을 입력하세요.")
     private Integer price;
     @Schema(description = "판매자 번호",requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer seller;
     @Schema(description = "거래 방식",allowableValues = {"온라인","직거래"})
-    @NotNull(message = "거래방식을 입력하세요.")
+    @NotBlank(message = "거래방식을 입력하세요.")
     private TransactionModeEnum transactionMode;
     @Schema(description = "글 아이디")
     private String address;

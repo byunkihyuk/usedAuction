@@ -58,8 +58,7 @@ public class UserService {
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
     private String SENDER_MAIL;
-    @Value("${spring.mail.properties.mail.smtp.timeout}")
-    private Long MAIL_TIMEOUT;
+    private Long MAIL_TIMEOUT = 300L;
 
 
     // redis
@@ -136,10 +135,13 @@ public class UserService {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
 
+        UserDto userDto = DataMapper.instance.UserEntityToDto(userRepository.findByUsername(userSignInFormDto.getUsername())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER)));
+
         Map<String, Object> data = new HashMap<>();
         data.put("message","로그인 성공");
         data.put("token",jwt);
-        data.put("nickname",userSignInFormDto.getUsername());
+        data.put("nickname",userDto.getNickname());
 
         return ResponseEntity.status(HttpStatus.OK)
                 .headers(httpHeaders)
@@ -343,6 +345,22 @@ public class UserService {
         return sb.toString();
     }
 
+    public String createPassword(){
+        String charString = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+        StringBuilder sb = new StringBuilder();
+
+        try{
+            Random random = SecureRandom.getInstanceStrong();
+            for(int i=0; i<6; i++){
+                sb.append(charString.charAt(random.nextInt(charString.length())));
+            }
+        }catch (Exception e ){
+            throw new ApiException(ErrorEnum.CREATE_MAIL_SECURE_NUMBER_ERROR);
+        }
+        return sb.toString();
+    }
+
     @Transactional
     public ResponseEntity<Object> sendMail(MailAuthDto mailAuthDto){
         User user = userRepository.findByUsername(mailAuthDto.getMail())
@@ -379,6 +397,7 @@ public class UserService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
+
     public ResponseEntity<Object> getMailAuth(MailAuthDto mailAuthDto) {
 
         ResponseResult<Object> result = new ResponseResult<>();
@@ -412,6 +431,43 @@ public class UserService {
             return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","사용중인 번호입니다."));
         }
 
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    @Transactional
+    public ResponseEntity<Object> findPassword(String username) {
+        System.out.println(username);
+        User user = userRepository.findByUsername(username)
+                .orElse(null);
+
+        Map<String, String> result = new HashMap<>();
+
+        if(user==null){
+            result.put("message","임시 비밀번호 전송 실패.");
+            result.put("status","fail");
+            return ResponseEntity.status(HttpStatus.OK).body(result);
+        }
+        System.out.println("전송");
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+
+        String temporary = createPassword();
+        System.out.println(temporary);
+        try{
+            mimeMessage.setFrom(SENDER_MAIL);
+            mimeMessage.setRecipients(MimeMessage.RecipientType.TO, username);
+            mimeMessage.setSubject("usedAuction 임시 비밀번호 발급");
+            String body = "<h2>usedAuction 임시 비밀번호 입니다.</h2>" +
+                    "<h1>"+temporary+"</h1>";
+            mimeMessage.setText(body,"UTF-8","html");
+            javaMailSender.send(mimeMessage);
+
+            user.setPassword(passwordEncoder.encode(temporary));
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.OK).body(new ResponseResultError("fail","임시 비밀번호 발송 실패."));
+        }
+        result.put("message","임시 비밀번호 전송 완료.");
+        result.put("status","success");
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
