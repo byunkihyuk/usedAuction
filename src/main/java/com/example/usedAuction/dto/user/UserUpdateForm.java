@@ -15,6 +15,9 @@ public class UserUpdateForm {
     @Schema(description = "비밀번호")
     @NotBlank(message = "비밀번호를 입력해주세요.")
     private String password;
+    @Schema(description = "수정 비밀번호")
+    @NotBlank(message = "비밀번호를 입력해주세요.")
+    private String changePassword;
     @Schema(description = "닉네임")
     @NotBlank(message = "닉네임을 입력해주세요.")
     private String nickname;
