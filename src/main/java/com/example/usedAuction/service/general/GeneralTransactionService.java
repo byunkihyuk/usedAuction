@@ -147,7 +147,7 @@ public class GeneralTransactionService {
         List<GeneralTransactionDto> resultGeneralTransaction = new ArrayList<>();
 
         if(state.equals("전체")){
-            resultGeneralTransaction = generalTransactionRepository.findAll(pageable).stream()
+            resultGeneralTransaction = generalTransactionRepository.findAllBySearch(keyword,pageable).stream()
                     .map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
         }else{
             switch (state){

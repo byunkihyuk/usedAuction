@@ -35,7 +35,13 @@ public interface GeneralTransactionRepository extends JpaRepository<GeneralTrans
     @Query("select g from GeneralTransaction g where g.title like :keyword or g.content like :keyword  order by createdAt desc")
     List<GeneralTransaction> findAllBySearch(@Param("keyword") String keyword, Pageable pageable);
 
-    List<GeneralTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum state,String title,String content,Pageable pageable);
+//    List<GeneralTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum state,String title,String content,Pageable pageable);
+//
+//    List<GeneralTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum state,String title,String content);
 
-    List<GeneralTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum state,String title,String content);
+    @Query("select g from GeneralTransaction g where (g.title like :title or g.content like :content) and g.transactionState = :state")
+    List<GeneralTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(@Param("state") TransactionStateEnum state,@Param("title")String title,@Param("content")String content,Pageable pageable);
+
+    @Query("select g from GeneralTransaction g where (g.title like :title or g.content like :content) and g.transactionState = :state")
+    List<GeneralTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(@Param("state") TransactionStateEnum state,@Param("title")String title,@Param("content")String content);
 }
