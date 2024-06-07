@@ -55,7 +55,7 @@ public class AuctionTransaction {
 
     private String detailAddress;
 
-    @Column(name = "transaction_sate")
+    @Column(name = "transaction_state")
     @Enumerated(EnumType.STRING)
     private TransactionStateEnum transactionState;
 
