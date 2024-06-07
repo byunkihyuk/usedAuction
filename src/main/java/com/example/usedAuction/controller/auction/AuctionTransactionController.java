@@ -78,7 +78,7 @@ public class AuctionTransactionController {
                                                            @RequestParam(required = false,defaultValue = "") String keyword){
         String likeKeyword = "";
         if(keyword!=null){
-            likeKeyword = keyword;
+            likeKeyword = "%"+keyword+"%";
         }
         GetAllAuctionTransactionResultDto getAllAuctionTransactionResultDto = new GetAllAuctionTransactionResultDto();
         getAllAuctionTransactionResultDto.setTransactionList(auctionTransactionService.getAllAuctionTransaction(page,size,sort,state,likeKeyword));

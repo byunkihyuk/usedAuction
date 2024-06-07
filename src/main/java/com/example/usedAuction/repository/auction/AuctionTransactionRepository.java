@@ -34,10 +34,12 @@ public interface AuctionTransactionRepository extends JpaRepository<AuctionTrans
 
     List<AuctionTransaction> findAllByBuyer(User idUser, Pageable pageable);
 
-    @Query("select a from AuctionTransaction a where a.title like :keyword or a.content like :keyword order by createdAt desc")
+    @Query("select a from AuctionTransaction a where a.title like :keyword or a.content like :keyword")
     List<AuctionTransaction> findAllBySearch(@Param("keyword") String keyword, Pageable pageable);
 
-    List<AuctionTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum state,String title,String content,Pageable pageable);
+    @Query("select a from AuctionTransaction a where (a.title like :title or a.content like :content) and a.transactionState = :state")
+    List<AuctionTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(@Param("state") TransactionStateEnum state,@Param("title")String title,@Param("content")String content,Pageable pageable);
 
-    List<AuctionTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(TransactionStateEnum state,String title,String content);
+    @Query("select a from AuctionTransaction a where (a.title like :title or a.content like :content) and a.transactionState = :state")
+    List<AuctionTransaction> findAllByTransactionStateAndTitleContainingOrContentContaining(@Param("state") TransactionStateEnum state,@Param("title")String title,@Param("content")String content);
 }

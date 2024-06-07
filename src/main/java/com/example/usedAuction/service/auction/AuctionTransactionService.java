@@ -154,7 +154,7 @@ public class AuctionTransactionService {
         List<AuctionTransactionDto> resultAuctionTransaction = new ArrayList<>();
 
         if(state.equals("전체")){
-            resultAuctionTransaction = auctionTransactionRepository.findAll(pageable).stream()
+            resultAuctionTransaction = auctionTransactionRepository.findAllBySearch(keyword,pageable).stream()
                     .map(DataMapper.instance::auctionTransactionToDto).collect(Collectors.toList());
         }else{
             switch (state){
