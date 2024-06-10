@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.sql.Timestamp;
@@ -26,7 +27,7 @@ public class AuctionTransactionFormDto {
     @Schema(description = "판매자 번호",requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer seller;
     @Schema(description = "거래 방식",allowableValues = {"온라인","직거래"})
-    @NotBlank(message = "거래방식을 입력하세요.")
+    @NotNull(message = "거래방식을 입력하세요.")
     private TransactionModeEnum transactionMode;
     @Schema(description = "글 아이디")
     private String address;
@@ -35,6 +36,7 @@ public class AuctionTransactionFormDto {
     @Schema(description = "글 상태",allowableValues = {"판매중","거래중","거래완료"})
     private TransactionStateEnum transactionState;
     @Schema(description = "결제 방식",allowableValues = {"온라인","직거래"})
+    @NotNull(message = "결제 방식을 선택하세요.")
     private TransactionPaymentEnum payment;
     @Schema(description = "경매 시작일")
     private Timestamp startedAt;
