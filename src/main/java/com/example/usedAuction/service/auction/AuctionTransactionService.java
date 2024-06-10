@@ -357,10 +357,11 @@ public class AuctionTransactionService {
     }
 
     @Transactional(readOnly = true)
-    public List<AuctionTransactionDto> topAuctionList(String sortOption) {
-        Sort sort = Sort.by("viewCount").descending();
-        if(sortOption.equals("createdAt")){
-            sort = Sort.by("createdAt").descending();
+    public List<AuctionTransactionDto>  topAuctionList(String sortOption) {
+        Sort sort = Sort.by("createdAt").descending();
+        if(!sortOption.equals("createdAt")){
+            Sort sort2 = Sort.by("createdAt").descending();
+            sort = Sort.by("viewCount").descending().and(sort2);
         }
 
         return  auctionTransactionRepository.findTop10ByTransactionStateNot(TransactionStateEnum.COMPLETE,sort)
@@ -399,7 +400,6 @@ public class AuctionTransactionService {
             result.setData(DataMapper.instance.auctionBidEntityToDto(resultBid));
             auctionTransaction.setHighestBid((resultBid.getPrice()));
             sseService.auctionPublish(String.valueOf(auctionBidDto.getAuctionTransactionId()),resultBid.getPrice());
-
         }catch (Exception e){
             throw new ApiException(ErrorEnum.FAIL_BID);
         }

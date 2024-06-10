@@ -370,9 +370,10 @@ public class GeneralTransactionService {
 
     @Transactional(readOnly = true)
     public List<GeneralTransactionDto> topGeneralList(String sortOption) {
-        Sort sort = Sort.by("viewCount").descending();
-        if(sortOption.equals("createdAt")){
-            sort = Sort.by("createdAt").descending();
+        Sort sort = Sort.by("createdAt").descending();
+        if(!sortOption.equals("createdAt")){
+            Sort sort2 = Sort.by("createdAt").descending();
+            sort = Sort.by("viewCount").descending().and(sort2);
         }
         return generalTransactionRepository.findTop10ByTransactionStateNot(TransactionStateEnum.COMPLETE,sort)
                 .stream().map(DataMapper.instance::generalTransactionToDto).collect(Collectors.toList());
