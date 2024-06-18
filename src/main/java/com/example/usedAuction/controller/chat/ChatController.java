@@ -68,7 +68,6 @@ public class ChatController {
     @Operation(summary = "채팅 내역 조회 API (JWT 토큰 필요)",description = "채팅방 입장 시 채팅 내역 조회")
     @GetMapping("/chat/{roomId}")
     public ResponseEntity<Object> getChatting(@PathVariable Integer roomId,@RequestParam(value = "start", required = false, defaultValue = "0") int start){
-        System.out.println(start/50);
         List<ChattingMessageDto> messageDtoList = chattingService.getMessageList(roomId,start);
 
         ResponseResult<Object> result = new ResponseResult<>();
@@ -77,7 +76,7 @@ public class ChatController {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 
-    // 채팅방 입장 - 상대방 닉네임,번호 가져오기
+    // 채팅방 입장 시 - 상대방 닉네임,번호 가져오기
     @Operation(summary = "채팅방 상대 정보 조회 API (JWT 토큰 필요)",description = "채팅방 상대방 정보 표시를 위해 상대방 정보 조회")
     @GetMapping("/chat-receiver/{roomId}")
     public ResponseEntity<Object> getChattingReceiver(@PathVariable Integer roomId){
@@ -89,4 +88,16 @@ public class ChatController {
     public ResponseEntity<SseEmitter> chatSubscriber(@RequestParam(value = "user-id") String userId){
         return sseService.chatSubscribe(userId);
     }
+
+    // 채팅방 생성 - 구매요청을 통해 판매자가 채팅방 생성
+    @Operation(summary = "채팅방 생성 API (JWT 토큰 필요)",description = "판매자가 채팅방 생성")
+    @PostMapping("/chat/buyer")
+    public ResponseEntity<Object> sellerPostChatting(@RequestBody GeneralTransactionDto generalTransactionDto){
+        List<ChattingMessageDto> messageDtoList = chattingService.sellerPostChattingRoom(generalTransactionDto);
+        ResponseResult<Object> result = new ResponseResult<>();
+        result.setStatus("success");
+        result.setData(messageDtoList);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
 }

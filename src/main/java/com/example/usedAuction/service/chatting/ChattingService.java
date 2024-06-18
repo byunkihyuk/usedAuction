@@ -208,6 +208,7 @@ public class ChattingService {
 //        return redisTemplate.opsForList().range(roomId,start,end);
 //    }
 
+    @Transactional(readOnly = true)
     public List<ChattingMessageDto> getMessageList(Integer roomId,int start) {
         // 로그인 여부 확인
         User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
@@ -248,6 +249,66 @@ public class ChattingService {
 //        }
         Collections.reverse(messageDtoList);
         return messageDtoList;
+    }
+
+    @Transactional
+    public List<ChattingMessageDto> sellerPostChattingRoom(GeneralTransactionDto generalTransactionDto){
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        User receiver = userRepository.findById(generalTransactionDto.getBuyer())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        GeneralTransaction generalTransaction = generalTransactionRepository.findById(generalTransactionDto.getGeneralTransactionId())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_GENERAL_TRANSACTION));
+
+        // DB에 채팅방이 있는지 검색
+        ChattingRoom chattingRoom = chattingRepository.findBySenderAndReceiver(loginUser,receiver);
+        ChattingRoomDto createRoom = null;
+
+        // 채팅방이 없다면 채팅방 생성
+        if(chattingRoom==null){
+            ChattingRoomDto createRoomDto = new ChattingRoomDto();
+            createRoomDto.setSender(loginUser.getUserId());
+            createRoomDto.setSenderNickname(loginUser.getNickname());
+            createRoomDto.setReceiver(receiver.getUserId());
+            createRoomDto.setReceiverNickname(receiver.getNickname());
+            createRoomDto.setProductThumbnail(generalTransaction.getThumbnail());
+            chattingRoom = DataMapper.instance.chattingRoomDtoToEntity(createRoomDto);
+            try {
+                createRoom = DataMapper.instance.chattingRoomEntityToDto(chattingRepository.save(chattingRoom));
+                // redis hash에 채팅방 정보 저장
+                ////opsHashChatting.put(CHAT_ROOMS, String.valueOf(createRoom.getRoomId()), createRoom);
+            }catch (Exception e){
+                throw new ApiException(ErrorEnum.CHAT_ROOM_CREATE_ERROR);
+            }
+        }else{
+            chattingRoom.setProductThumbnail(generalTransaction.getThumbnail());
+        }
+
+        if(createRoom==null){
+            enterRoom(String.valueOf(chattingRoom.getRoomId()));
+        }else{
+            enterRoom(String.valueOf(createRoom.getRoomId()));
+        }
+
+        // 채팅하기를 누른 판매중인 상품 채팅방에 전송
+        ChattingMessageDto chattingMessageDto = new ChattingMessageDto();
+        chattingMessageDto.setSender(loginUser.getUserId());
+        chattingMessageDto.setReceiver(receiver.getUserId());
+        chattingMessageDto.setContent("https://usedauction.net/general/"+generalTransactionDto.getGeneralTransactionId());
+        if(createRoom==null){
+            chattingMessageDto.setRoomId(chattingRoom.getRoomId());
+        }else{
+            chattingMessageDto.setRoomId(createRoom.getRoomId());
+        }
+        // DTO 생성 및 메세지 저장
+        sendChatting(chattingMessageDto);
+        // redis에도 메시지 추가
+        ////redisSaveMessage(chattingMessageDto);
+
+        // 해당 채팅방 메시지 목록 리턴
+        return getMessageList(chattingRoom.getRoomId(),0);
     }
 
     public Object getChattingReceiver(Integer roomId) {
