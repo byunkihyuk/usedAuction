@@ -3,12 +3,17 @@ package com.example.usedAuction.service.see;
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.chat.ChattingMessageDto;
 import com.example.usedAuction.dto.chat.ChattingRoomDto;
+import com.example.usedAuction.dto.notification.NotificationDto;
 import com.example.usedAuction.entity.chat.ChattingRoom;
+import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.chatting.ChattingRoomRepository;
+import com.example.usedAuction.repository.user.UserRepository;
+import com.example.usedAuction.util.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -25,10 +30,14 @@ public class SseService {
     //private final List<Map<String, SseEmitter>> seeList = new ArrayList<>();
     private final Map<String, Map<String, SseEmitter>> auctionEmt = new ConcurrentHashMap<>();
     private final Map<String, SseEmitter> chatEmt = new ConcurrentHashMap<>();
+    private final Map<String, SseEmitter> notificationEmt = new ConcurrentHashMap<>();
     private static final long TIMEOUT = 3600000L;
     private static final long RECONNECTION_TIMEOUT = 1000L;
     private final ChattingRoomRepository chattingRoomRepository;
     private final ObjectMapper mapper = new ObjectMapper();
+    private final UserRepository userRepository;
+    @Value("${spring.domain}")
+    public static String domain;
 
     public ResponseEntity<SseEmitter> chatSubscribe(String userId) {
 
@@ -96,14 +105,12 @@ public class SseService {
         try {
             emitter1.send(sseChatEventBuilder("chat",String.valueOf(roomDto.getSender()),mapper.writeValueAsString(roomDto)));
         } catch (Exception e) {
-            System.out.println("em1 에러");
             chatEmt.remove(String.valueOf(roomDto.getSender()));
         }
 
         try {
             emitter2.send(sseChatEventBuilder("chat",String.valueOf(roomDto.getReceiver()),mapper.writeValueAsString(roomDto)));
         } catch (Exception e) {
-            System.out.println("em2 에러");
             chatEmt.remove(String.valueOf(roomDto.getReceiver()));
         }
 
@@ -177,7 +184,6 @@ public class SseService {
                     emitter.send(sseAuctionEventBuilder("auctionBid",auctionTransactionId,String.valueOf(price)));
                 } catch (IOException e) {
                     System.out.println("에러 : "+ e.getMessage());
-                    System.out.println("삭제");
                     getEmt.remove(key);
                 }
             }
@@ -193,4 +199,75 @@ public class SseService {
     }
 
 
+    public ResponseEntity<SseEmitter> notificationSubscribe(String nickname) {
+
+        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        if(!loginUser.getNickname().equals(nickname)){
+            throw new ApiException(ErrorEnum.UNAUTHORIZED_ERROR);
+        }
+
+        if(notificationEmt.containsKey(nickname)){
+            return ResponseEntity.ok( notificationEmt.get(nickname));
+        }
+
+        SseEmitter emitter = createNotificationSeeEmitter(nickname);
+
+        notificationEmt.put(nickname, emitter);
+
+        try {
+            emitter.send(sseChatEventBuilder("notification",nickname,"Notification Subscribed successfully.")); //503 방지를위한 더미데이터
+        } catch (IOException e) {
+            System.out.println("subscribe error : , "+ e.getMessage());
+        }
+        return ResponseEntity.ok(emitter);
+    }
+
+    private SseEmitter createNotificationSeeEmitter(String userId) {
+        SseEmitter emitter = new SseEmitter(TIMEOUT);
+
+        emitter.onTimeout(() -> {
+            System.out.println("timed out : "+ userId);
+            emitter.complete();
+        });
+
+        //에러 핸들러 등록
+        emitter.onError(e -> {
+            System.out.println("Error message : "+ e.getMessage());
+            emitter.complete();
+        });
+
+        //SSE complete 핸들러 등록
+        emitter.onCompletion(() -> {
+            if (notificationEmt.remove(userId) != null) {
+                System.out.println("Remove notification userId : "+ userId);
+            }
+            System.out.println("disconnect notification usrId : "+ userId);
+        });
+        return emitter;
+    }
+
+    public void notificationPublish(NotificationDto notificationDto) {
+
+        SseEmitter emitter = chatEmt.get(String.valueOf(notificationDto.getUserId()));
+
+        if(emitter==null){
+            emitter = createNotificationSeeEmitter(String.valueOf(notificationDto.getUserId()));
+        }
+
+        try {
+            emitter.send(sseNotificationEventBuilder("notification",String.valueOf(notificationDto.getUserId()),mapper.writeValueAsString(notificationDto)));
+        } catch (Exception e) {
+            notificationEmt.remove(String.valueOf(notificationDto.getUserId()));
+        }
+    }
+
+    private SseEmitter.SseEventBuilder sseNotificationEventBuilder(String name, String userId, String notificationDto) {
+        return SseEmitter.event()
+                .name(name) //이벤트 명
+                .id(userId) //이벤트 ID
+                .data(notificationDto) //전송 데이터
+                .reconnectTime(RECONNECTION_TIMEOUT); // 재연결 대기시작
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.usedAuction.service.payment;
 
 import com.example.usedAuction.dto.DataMapper;
+import com.example.usedAuction.dto.notification.NotificationDto;
 import com.example.usedAuction.dto.payment.PayInfoDto;
 import com.example.usedAuction.dto.result.ResponseResult;
 import com.example.usedAuction.dto.result.ResponseResultError;
@@ -15,8 +16,11 @@ import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.auction.AuctionBidRepository;
 import com.example.usedAuction.repository.auction.AuctionTransactionRepository;
 import com.example.usedAuction.repository.general.GeneralTransactionRepository;
+import com.example.usedAuction.repository.notification.NotificationRepository;
 import com.example.usedAuction.repository.payment.PayInfoRepository;
 import com.example.usedAuction.repository.user.UserRepository;
+import com.example.usedAuction.service.notification.NotificationService;
+import com.example.usedAuction.service.see.SseService;
 import com.example.usedAuction.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Transaction;
@@ -38,6 +42,8 @@ public class PaymentService {
     private final GeneralTransactionRepository generalTransactionRepository;
     private final AuctionTransactionRepository auctionTransactionRepository;
     private final AuctionBidRepository auctionBidRepository;
+    private final NotificationRepository notificationRepository;
+    private final SseService sseService;
 
     @Transactional(readOnly = true)
     public ResponseEntity<Object> getHistory(Integer userId) {
@@ -175,9 +181,16 @@ public class PaymentService {
         savePay.setUsedTransactionType(UsedTransactionTypeEnum.GENERAL_TRANSACTION);
         savePay.setGeneralTransactionId(generalTransaction);
 
+        NotificationDto notificationDto = new NotificationDto();
+        notificationDto.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto.setMessage(loginUser.getNickname() + "님으로부터 " + generalTransaction.getTitle() + "글의 구매요청이 왔습니다.");
+        notificationDto.setUserId(seller.getUserId());
+
         try {
             // 머니 결제 요청
             payInfoRepository.save(savePay);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto));
+            sseService.notificationPublish(notificationDto);
         }catch (Exception e){
             throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_PAYMENT_FAIL);
         }
@@ -242,10 +255,24 @@ public class PaymentService {
         PayInfo payInfo = payInfoRepository.findById(payInfoDto.getPayInfoId())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_PAY_INFO));
 
+        NotificationDto notificationDto1 = new NotificationDto();
+        notificationDto1.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto1.setMessage(generalTransaction.getTitle() + "글이 거래중으로 변경되었습니다.");
+        notificationDto1.setUserId(seller.getUserId());
+
+        NotificationDto notificationDto2 = new NotificationDto();
+        notificationDto2.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto2.setMessage(generalTransaction.getTitle() + "글이 거래중으로 변경되었습니다.");
+        notificationDto2.setUserId(loginUser.getUserId());
+
         try {
             // 거래 글 예약중으로 변경
             generalTransaction.setTransactionState(TransactionStateEnum.PROGRESS);
             payInfo.setTransactionRequestState(TransactionRequestStateEnum.PROGRESS);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto1));
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto2));
+            sseService.notificationPublish(notificationDto1);
+            sseService.notificationPublish(notificationDto2);
         }catch (Exception e){
             throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_APPROVE_FAIL);
         }
@@ -279,6 +306,17 @@ public class PaymentService {
         if(loginUser.getMoney() < payInfo.getTransactionMoney()){
             throw new ApiException(ErrorEnum.INSUFFICIENT_MONEY);
         }
+
+        NotificationDto notificationDto1 = new NotificationDto();
+        notificationDto1.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto1.setMessage(generalTransaction.getTitle() + "글의 거래가 완료되었습니다.");
+        notificationDto1.setUserId(seller.getUserId());
+
+        NotificationDto notificationDto2 = new NotificationDto();
+        notificationDto2.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto2.setMessage(generalTransaction.getTitle() + "글의 거래가 완료되었습니다.");
+        notificationDto2.setUserId(loginUser.getUserId());
+
         try {
             // 판매자 잔액 수정
             seller.setMoney(seller.getMoney() + payInfo.getTransactionMoney());
@@ -287,6 +325,10 @@ public class PaymentService {
             payInfo.setTransactionRequestState(TransactionRequestStateEnum.APPROVE);
             generalTransaction.setTransactionState(TransactionStateEnum.COMPLETE);
             generalTransaction.setBuyer(loginUser);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto1));
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto2));
+            sseService.notificationPublish(notificationDto1);
+            sseService.notificationPublish(notificationDto2);
         }catch (Exception e){
             throw new ApiException(ErrorEnum.GENERAL_TRANSACTION_APPROVE_FAIL);
         }
@@ -323,9 +365,23 @@ public class PaymentService {
             throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
         }
 
+        NotificationDto notificationDto1 = new NotificationDto();
+        notificationDto1.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto1.setMessage(generalTransaction.getTitle() + "글의 거래가 취소되었습니다.");
+        notificationDto1.setUserId(seller.getUserId());
+
+        NotificationDto notificationDto2 = new NotificationDto();
+        notificationDto2.setUrl(SseService.domain+"/general/"+generalTransaction.getGeneralTransactionId());
+        notificationDto2.setMessage(generalTransaction.getTitle() + "글의 거래가 취소되었습니다.");
+        notificationDto2.setUserId(loginUser.getUserId());
+
         try {
             payInfo.setTransactionRequestState(TransactionRequestStateEnum.CANCEL);
             generalTransaction.setTransactionState(TransactionStateEnum.SALE);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto1));
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto2));
+            sseService.notificationPublish(notificationDto1);
+            sseService.notificationPublish(notificationDto2);
         }catch (Exception e ){
             throw new ApiException(ErrorEnum.PAYMENT_CANCEL_FAIL);
         }
@@ -371,11 +427,19 @@ public class PaymentService {
         savePay.setAuctionTransactionId(auctionTransaction);
 
         PayInfo payInfo = null;
+
+        NotificationDto notificationDto = new NotificationDto();
+        notificationDto.setUrl(SseService.domain+"/auction/"+auctionTransaction.getAuctionTransactionId());
+        notificationDto.setMessage(auctionTransaction.getTitle() + "글의 거래가 진행중으로 변경되었습니다.");
+        notificationDto.setUserId(bidder.getUserId());
+
         try {
             payInfo = payInfoRepository.save(savePay);
             auctionBid.setAuctionBidState(AuctionBidStateEnum.WAIT);
             auctionTransaction.setTransactionState(TransactionStateEnum.PROGRESS);
             auctionTransaction.setBuyer(bidder);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto));
+            sseService.notificationPublish(notificationDto);
         }catch (Exception e){
             throw new ApiException(ErrorEnum.AUCTION_TRANSACTION_PAYMENT_FAIL);
         }
@@ -416,6 +480,16 @@ public class PaymentService {
             throw new ApiException(ErrorEnum.INSUFFICIENT_MONEY);
         }
 
+        NotificationDto notificationDto1 = new NotificationDto();
+        notificationDto1.setUrl(SseService.domain+"/auction/"+auctionTransaction.getAuctionTransactionId());
+        notificationDto1.setMessage(auctionTransaction.getTitle() + "글의 거래가 완료되었습니다.");
+        notificationDto1.setUserId(seller.getUserId());
+
+        NotificationDto notificationDto2 = new NotificationDto();
+        notificationDto2.setUrl(SseService.domain+"/auction/"+auctionTransaction.getAuctionTransactionId());
+        notificationDto2.setMessage(auctionTransaction.getTitle() + "글의 거래가 완료되었습니다.");
+        notificationDto2.setUserId(loginUser.getUserId());
+
         // sender 잔액 수정
         try {
             seller.setMoney(seller.getMoney() + payInfo.getTransactionMoney());
@@ -423,6 +497,10 @@ public class PaymentService {
             auctionBid.setAuctionBidState(AuctionBidStateEnum.APPROVE);
             payInfo.setTransactionRequestState(TransactionRequestStateEnum.APPROVE);
             auctionTransaction.setTransactionState(TransactionStateEnum.COMPLETE);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto1));
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto2));
+            sseService.notificationPublish(notificationDto1);
+            sseService.notificationPublish(notificationDto2);
         }catch ( Exception e ){
             throw new ApiException(ErrorEnum.AUCTION_TRANSACTION_APPROVE_FAIL);
         }
@@ -463,11 +541,25 @@ public class PaymentService {
             throw new ApiException(ErrorEnum.PAYMENT_COMPLETED_CANCEL_FAIL);
         }
 
+        NotificationDto notificationDto1 = new NotificationDto();
+        notificationDto1.setUrl(SseService.domain+"/auction/"+auctionTransaction.getAuctionTransactionId());
+        notificationDto1.setMessage(auctionTransaction.getTitle() + "글의 거래가 취소되었습니다.");
+        notificationDto1.setUserId(seller.getUserId());
+
+        NotificationDto notificationDto2 = new NotificationDto();
+        notificationDto2.setUrl(SseService.domain+"/auction/"+auctionTransaction.getAuctionTransactionId());
+        notificationDto2.setMessage(auctionTransaction.getTitle() + "글의 거래가 취소되었습니다.");
+        notificationDto2.setUserId(loginUser.getUserId());
+
         try {
             auctionBid.setAuctionBidState(AuctionBidStateEnum.CANCEL);
             payInfo.setTransactionRequestState(TransactionRequestStateEnum.CANCEL);
             auctionTransaction.setTransactionState(TransactionStateEnum.SALE);
             auctionTransaction.setBuyer(null);
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto1));
+            notificationRepository.save(DataMapper.instance.notificationDtoToEntity(notificationDto2));
+            sseService.notificationPublish(notificationDto1);
+            sseService.notificationPublish(notificationDto2);
         }catch (Exception e ){
             throw new ApiException(ErrorEnum.PAYMENT_CANCEL_FAIL);
         }
@@ -479,3 +571,4 @@ public class PaymentService {
         return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }
+
