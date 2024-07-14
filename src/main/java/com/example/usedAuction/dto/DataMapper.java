@@ -6,6 +6,7 @@ import com.example.usedAuction.dto.chat.ChattingRoomDto;
 import com.example.usedAuction.dto.general.GeneralTransactionImageDto;
 import com.example.usedAuction.dto.general.GeneralTransactionDto;
 import com.example.usedAuction.dto.general.GeneralTransactionFormDto;
+import com.example.usedAuction.dto.notification.NotificationDto;
 import com.example.usedAuction.dto.payment.PayInfoDto;
 import com.example.usedAuction.dto.user.MailAuthDto;
 import com.example.usedAuction.dto.user.UserDto;
@@ -17,6 +18,7 @@ import com.example.usedAuction.entity.chat.ChattingMessage;
 import com.example.usedAuction.entity.chat.ChattingRoom;
 import com.example.usedAuction.entity.general.GeneralTransaction;
 import com.example.usedAuction.entity.general.GeneralTransactionImage;
+import com.example.usedAuction.entity.notification.Notification;
 import com.example.usedAuction.entity.payment.PayInfo;
 import com.example.usedAuction.entity.user.User;
 import org.mapstruct.Mapper;
@@ -105,5 +107,11 @@ public interface DataMapper {
     @Mapping(source = "generalTransactionId.generalTransactionId", target = "generalTransactionId")
     @Mapping(source = "auctionTransactionId.auctionTransactionId", target = "auctionTransactionId")
     PayInfoDto payInfoEntityToDto(PayInfo payInfoEntity);
+
+    @Mapping(source = "userId.userId", target = "userId")
+    NotificationDto notificationEntityToDto(Notification notification);
+
+    @Mapping(source = "userId", target = "userId.userId")
+    Notification notificationDtoToEntity(NotificationDto notificationDto);
 
 }
