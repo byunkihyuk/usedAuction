@@ -45,7 +45,9 @@ public enum ErrorEnum {
     NOT_FOUND_PAY_INFO(HttpStatus.BAD_REQUEST,"결제 정보가 없습니다." ),
     INSUFFICIENT_MONEY(HttpStatus.BAD_REQUEST,"잔액이 부족합니다." ),
     NOT_FOUND_BID(HttpStatus.BAD_REQUEST,"입찰 정보가 없습니다." ),
-    CREATE_MAIL_SECURE_NUMBER_ERROR(HttpStatus.BAD_REQUEST,"메일 인증번호 생성 실패" );
+    CREATE_MAIL_SECURE_NUMBER_ERROR(HttpStatus.BAD_REQUEST,"메일 인증번호 생성 실패" ),
+    NOT_FOUND_NOTIFICATION(HttpStatus.BAD_REQUEST,"알림을 찾을 수 없습니다."), 
+    NOTIFICATION_UPDATE_ERROR(HttpStatus.BAD_REQUEST,"알림을 읽기 에러.");
 
     private final HttpStatus httpStatus;
     private final String message;

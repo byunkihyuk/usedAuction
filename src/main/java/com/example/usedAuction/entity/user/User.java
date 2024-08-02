@@ -4,6 +4,7 @@ import com.example.usedAuction.entity.auction.AuctionBid;
 import com.example.usedAuction.entity.auction.AuctionTransaction;
 import com.example.usedAuction.entity.chat.ChattingMessage;
 import com.example.usedAuction.entity.general.GeneralTransaction;
+import com.example.usedAuction.entity.notification.Notification;
 import com.example.usedAuction.entity.payment.PayInfo;
 import lombok.Data;
 import org.hibernate.annotations.ColumnDefault;
@@ -78,4 +79,7 @@ public class User {
 
     @OneToMany(mappedBy = "buyer")
     private List<PayInfo> payInfoReceiverList = new ArrayList<>();
+
+    @OneToMany(mappedBy = "userId")
+    private List<Notification> notificationList = new ArrayList<>();
 }
