@@ -47,39 +47,57 @@ jobs:
       # build
       #- name: Build with Gradle
       #  run: ./gradlew clean build
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
-        with:
-          name: usedAuction
-          path: .
-          retention-days: 1
+      - name: Copy JAR to Azure VM
+        env:
+          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
+          AZURE_SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
+        run: |
+          echo "${{ secrets.AZURE_SSH_KEY }}" > id_rsa
+          chmod 600 id_rsa
+          scp -o StrictHostKeyChecking=no -i id_rsa *SNAPSHOT.jar $AZURE_USERNAME@$AZURE_VM_IP:/home/$AZURE_USERNAME/*SNAPSHOT.jar
 
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    environment:
-      name: 'production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
-    permissions:
-      id-token: write #This is required for requesting the JWT
+      - name: Run Spring Boot application on Azure VM
+        env:
+          AZURE_VM_IP: ${{ secrets.AZURE_VM_IP }}
+          AZURE_USERNAME: ${{ secrets.AZURE_USERNAME }}
+        run: |
+          ssh -o StrictHostKeyChecking=no -i id_rsa $AZURE_USERNAME@$AZURE_VM_IP "nohup java -jar /home/$AZURE_USERNAME/*SNAPSHOT.jar > app.log 2>&1 &"
 
-    steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
-        with:
-          name: usedAuction
+      ### Azure web app deploy
+      # - name: Upload artifact for deployment job
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: usedAuction
+      #     path: .
+      #     retention-days: 1
 
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.CLIENT_ID_SECRET_NAME }}
-          tenant-id: ${{ secrets.TENANT_ID_SECRET_NAME }}
-          subscription-id: ${{ secrets.SUBSCRIPTION_ID_SECRET_NAME }}
+  # deploy:
+  #   runs-on: ubuntu-latest
+  #   needs: build
+  #   environment:
+  #     name: 'production'
+  #     url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+  #   permissions:
+  #     id-token: write #This is required for requesting the JWT
 
-      - name: Deploy to Azure Web App
-        id: deploy-to-webapp
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: 'usedAuction'
-          slot-name: 'production'
-          package: '*SNAPSHOT.jar'
+    # steps:
+    #   - name: Download artifact from build job
+    #     uses: actions/download-artifact@v3
+    #     with:
+    #       name: usedAuction
+
+      # - name: Login to Azure
+      #   uses: azure/login@v2
+      #   with:
+      #     client-id: ${{ secrets.CLIENT_ID_SECRET_NAME }}
+      #     tenant-id: ${{ secrets.TENANT_ID_SECRET_NAME }}
+      #     subscription-id: ${{ secrets.SUBSCRIPTION_ID_SECRET_NAME }}
+
+      # - name: Deploy to Azure Web App
+      #   id: deploy-to-webapp
+      #   uses: azure/webapps-deploy@v3
+      #   with:
+      #     app-name: 'usedAuction'
+      #     slot-name: 'production'
+      #     package: '*SNAPSHOT.jar'
