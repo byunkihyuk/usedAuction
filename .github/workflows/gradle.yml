@@ -55,7 +55,7 @@ jobs:
         run: |
           echo "${{ secrets.AZURE_SSH_KEY }}" > id_rsa
           chmod 600 id_rsa
-          scp -o StrictHostKeyChecking=no -i id_rsa *SNAPSHOT.jar $AZURE_USERNAME@$AZURE_VM_IP:/home/$AZURE_USERNAME/*SNAPSHOT.jar
+          scp -o StrictHostKeyChecking=no -i id_rsa build/libs/*SNAPSHOT.jar $AZURE_USERNAME@$AZURE_VM_IP:/home/$AZURE_USERNAME/*SNAPSHOT.jar
 
       - name: Run Spring Boot application on Azure VM
         env:
