@@ -1,25 +1,24 @@
 package com.example.usedAuction.service.see;
 
+import com.example.usedAuction.config.jwt.TokenProvider;
 import com.example.usedAuction.dto.DataMapper;
 import com.example.usedAuction.dto.chat.ChattingMessageDto;
 import com.example.usedAuction.dto.chat.ChattingRoomDto;
 import com.example.usedAuction.dto.notification.NotificationDto;
 import com.example.usedAuction.entity.chat.ChattingRoom;
-import com.example.usedAuction.entity.user.User;
 import com.example.usedAuction.errors.ApiException;
 import com.example.usedAuction.errors.ErrorEnum;
 import com.example.usedAuction.repository.chatting.ChattingRoomRepository;
 import com.example.usedAuction.repository.user.UserRepository;
-import com.example.usedAuction.util.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,17 +26,18 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @RequiredArgsConstructor
 public class SseService {
+    private static final long TIMEOUT = 3600000L;
+    private static final long RECONNECTION_TIMEOUT = 1000L;
+    @Value("${spring.domain}")
+    public static String domain;
     //private final List<Map<String, SseEmitter>> seeList = new ArrayList<>();
     private final Map<String, Map<String, SseEmitter>> auctionEmt = new ConcurrentHashMap<>();
     private final Map<String, SseEmitter> chatEmt = new ConcurrentHashMap<>();
     private final Map<String, SseEmitter> notificationEmt = new ConcurrentHashMap<>();
-    private static final long TIMEOUT = 3600000L;
-    private static final long RECONNECTION_TIMEOUT = 1000L;
     private final ChattingRoomRepository chattingRoomRepository;
     private final ObjectMapper mapper = new ObjectMapper();
     private final UserRepository userRepository;
-    @Value("${spring.domain}")
-    public static String domain;
+    private final TokenProvider tokenProvider;
 
     public ResponseEntity<SseEmitter> chatSubscribe(String userId) {
 
@@ -199,13 +199,22 @@ public class SseService {
     }
 
 
-    public ResponseEntity<SseEmitter> notificationSubscribe(String nickname) {
+    public ResponseEntity<SseEmitter> notificationSubscribe(String nickname, String token) {
 
-        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
-                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+//        User loginUser = userRepository.findByUsername(SecurityUtil.getCurrentUsername().orElse(""))
+//                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-        if(!loginUser.getNickname().equals(nickname)){
-            throw new ApiException(ErrorEnum.UNAUTHORIZED_ERROR);
+//        if(!loginUser.getNickname().equals(nickname)){
+//            throw new ApiException(ErrorEnum.UNAUTHORIZED_ERROR);
+//        }
+        String loginNickname="";
+        if (StringUtils.hasText(token) && token.startsWith("Bearer ")) {
+            token =  token.substring(7);
+            loginNickname = tokenProvider.getNickname(token);
+        }
+
+        if(!loginNickname.equals(nickname)){
+            throw new ApiException(ErrorEnum.FORBIDDEN_ERROR);
         }
 
         if(notificationEmt.containsKey(nickname)){

@@ -56,14 +56,12 @@ public class UserService {
     private final UserRepository userRepository;
 
     private final JavaMailSender javaMailSender;
+    // redis
+    private final StringRedisTemplate stringRedisTemplate;
     @Value("${spring.mail.username}")
     private String SENDER_MAIL;
     @Value("${spring.mail.auth-timeout}")
     private Long MAIL_TIMEOUT;
-
-
-    // redis
-    private final StringRedisTemplate stringRedisTemplate;
 
     @Transactional
     public ResponseEntity<Object> signUp( UserSignUpFormDto userSignUpFormDto) {
@@ -130,7 +128,10 @@ public class UserService {
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = tokenProvider.createToken(authentication);
+        User loginUser = userRepository.findByUsername(userSignInFormDto.getUsername())
+                .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        String jwt = tokenProvider.createToken(authentication,loginUser.getNickname());
 
         // 헤더에 토큰 추가
         HttpHeaders httpHeaders = new HttpHeaders();
@@ -473,6 +474,13 @@ public class UserService {
         result.put("message","임시 비밀번호 전송 완료.");
         result.put("status","success");
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+    public UserDto getLoginUser(String nickname) {
+        User loginUser = userRepository.findByNickname(nickname)
+                .orElseThrow(()-> new ApiException(ErrorEnum.NOT_FOUND_USER));
+
+        return DataMapper.instance.UserEntityToDto(loginUser);
     }
 }
 
