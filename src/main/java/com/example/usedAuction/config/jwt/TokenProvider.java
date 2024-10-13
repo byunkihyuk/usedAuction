@@ -23,8 +23,8 @@ import java.util.stream.Collectors;
 @Component
 public class TokenProvider implements InitializingBean {
 
-   private final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
    private static final String AUTHORITIES_KEY = "auth";
+   private final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
    private final String secret;
    private final long tokenValidityInMilliseconds;
    private Key key;
@@ -42,7 +42,7 @@ public class TokenProvider implements InitializingBean {
       this.key = Keys.hmacShaKeyFor(keyBytes);
    }
 
-   public String createToken(Authentication authentication) {
+   public String createToken(Authentication authentication, String nickname) {
       String authorities = authentication.getAuthorities().stream()
          .map(GrantedAuthority::getAuthority)
          .collect(Collectors.joining(","));
@@ -53,9 +53,20 @@ public class TokenProvider implements InitializingBean {
       return Jwts.builder()
          .setSubject(authentication.getName())
          .claim(AUTHORITIES_KEY, authorities)
+         .claim("nickname",nickname)
          .signWith(key, SignatureAlgorithm.HS512)
          .setExpiration(validity)
          .compact();
+   }
+
+   public Claims getClaims(String token){
+      return Jwts.parserBuilder().setSigningKey(key).build().parseClaimsJws(token).getBody();
+   }
+
+   public String getNickname(String token){
+      String nickname = String.valueOf(getClaims(token).get("nickname"));
+      System.out.println("Claim 추출 : "+nickname);
+      return nickname;
    }
 
    public Authentication getAuthentication(String token) {
