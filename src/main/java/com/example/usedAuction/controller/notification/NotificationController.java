@@ -20,7 +20,7 @@ public class NotificationController {
     private final UserService userService;
 
     @Operation(summary = "알림 불러오기 API",description = "알림 정보를 Size 크기만큼 불러오기")
-    @GetMapping("/notification2")
+    @GetMapping("/notification")
     public ResponseEntity<Object> getAllNotification(@RequestParam(name = "start",required = true)Integer start){
         return notificationService.getAllNotification(start);
     }
