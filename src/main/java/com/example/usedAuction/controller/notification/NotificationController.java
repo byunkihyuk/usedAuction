@@ -3,8 +3,8 @@ package com.example.usedAuction.controller.notification;
 import com.example.usedAuction.dto.notification.NotificationDto;
 import com.example.usedAuction.service.notification.NotificationService;
 import com.example.usedAuction.service.see.SseService;
+import com.example.usedAuction.service.user.UserService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +17,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class NotificationController {
     private final NotificationService notificationService;
     private final SseService sseService;
+    private final UserService userService;
 
     @Operation(summary = "알림 불러오기 API",description = "알림 정보를 Size 크기만큼 불러오기")
     @GetMapping("/notification")
@@ -38,7 +39,8 @@ public class NotificationController {
 
     @Operation(hidden = true)
     @GetMapping(value = "/notification",produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public ResponseEntity<SseEmitter> chatSubscriber(@RequestParam(value = "nickname") String nickname){
-        return sseService.notificationSubscribe(nickname);
+    public ResponseEntity<SseEmitter> chatSubscriber(@RequestParam(value = "nickname") String nickname, @RequestHeader("Authorization") String token){
+//        UserDto loginUserDto = userService.getLoginUser(nickname);
+        return sseService.notificationSubscribe(nickname,token);
     }
 }
