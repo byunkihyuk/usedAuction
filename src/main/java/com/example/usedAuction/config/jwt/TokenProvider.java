@@ -3,8 +3,8 @@ package com.example.usedAuction.config.jwt;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
 public class TokenProvider implements InitializingBean {
 
    private static final String AUTHORITIES_KEY = "auth";
-   private final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
+//   private final Logger logger = LoggerFactory.getLogger(TokenProvider.class);
+   private final Logger logger = LogManager.getLogger(TokenProvider.class);
    private final String secret;
    private final long tokenValidityInMilliseconds;
    private Key key;
@@ -64,9 +65,7 @@ public class TokenProvider implements InitializingBean {
    }
 
    public String getNickname(String token){
-      String nickname = String.valueOf(getClaims(token).get("nickname"));
-      System.out.println("Claim 추출 : "+nickname);
-      return nickname;
+       return String.valueOf(getClaims(token).get("nickname"));
    }
 
    public Authentication getAuthentication(String token) {
