@@ -131,18 +131,23 @@ public class UserService {
         User loginUser = userRepository.findByUsername(userSignInFormDto.getUsername())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER));
 
-        String jwt = tokenProvider.createToken(authentication,loginUser.getNickname());
+        String accessToken = tokenProvider.createToken(authentication,loginUser.getNickname());
+        // 수정 - 리프레시 토큰 발급
+        String refreshToken = tokenProvider.createToken(authentication,loginUser.getNickname());
 
         // 헤더에 토큰 추가
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
+        httpHeaders.add(JwtFilter.AUTHORIZATION_HEADER, "Bearer " + accessToken);
+        // 수정 - 쿠키에 리프레시 토큰 추가
+        
 
         UserDto userDto = DataMapper.instance.UserEntityToDto(userRepository.findByUsername(userSignInFormDto.getUsername())
                 .orElseThrow(()->new ApiException(ErrorEnum.NOT_FOUND_USER)));
 
         Map<String, Object> data = new HashMap<>();
         data.put("message","로그인 성공");
-        data.put("token",jwt);
+        data.put("accessToken",accessToken);
+        data.put("refreshToken",refreshToken);
         data.put("nickname",userDto.getNickname());
 
         return ResponseEntity.status(HttpStatus.OK)
