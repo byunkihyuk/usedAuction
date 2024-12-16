@@ -54,7 +54,8 @@ jobs:
           AZURE_SSH_KEY: ${{ secrets.AZURE_SSH_KEY }}
         run: |
           CURRENT_DATE_TIME=$(date +"%Y%m%d%H%M")
-          DESTINATION_FILE_NAME="usedauction-${CURRENT_DATE_TIME}.jar"
+#          DESTINATION_FILE_NAME="usedauction-${CURRENT_DATE_TIME}.jar"
+          echo DESTINATION_FILE_NAME="usedauction-${CURRENT_DATE_TIME}.jar" >> $GITHUB_ENV
           echo "${{ secrets.AZURE_SSH_KEY }}" > id_rsa
           chmod 600 id_rsa
           scp -o StrictHostKeyChecking=no -i id_rsa build/libs/*SNAPSHOT.jar $AZURE_USERNAME@$AZURE_VM_IP:/home/$AZURE_USERNAME/$DESTINATION_FILE_NAME
